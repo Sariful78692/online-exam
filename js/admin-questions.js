@@ -1,20 +1,30 @@
 let questions = [];
+let exams = [];
 let currentQuestionPage = 1;
 const QUESTIONS_PER_PAGE = 10;
 
 window.onload = async () => {
-    await loadQuestionSubjects();
+    await loadQuestionExams();
     await loadQuestions();
 };
 
+async function loadQuestionExams() {
+    exams = await fetchData('Exams');
+    const examSelect = document.getElementById('exam_name');
+    examSelect.innerHTML = '<option value="">Select exam</option>' + (exams || [])
+        .filter(exam => exam.Exam_Name)
+        .map(exam => `<option value="${escapeQuestionHtml(exam.Exam_Name)}">${escapeQuestionHtml(exam.Exam_Name)}</option>`).join('');
+    examSelect.addEventListener('change', loadQuestionSubjects);
+    await loadQuestionSubjects();
+}
+
 async function loadQuestionSubjects() {
     const select = document.getElementById('subject');
+    const selectedExam = document.getElementById('exam_name').value;
+    const examSubjects = (exams || []).filter(exam => !selectedExam || exam.Exam_Name === selectedExam).map(exam => exam.Subject);
     const saved = await fetchData('Subjects');
-    let names = (saved || []).map(s => s.Subject_Name || s.Subject).filter(Boolean);
-    if (!names.length) {
-        const oldQuestions = await fetchData('Questions');
-        names = [...new Set((oldQuestions || []).map(q => q.Subject).filter(Boolean))];
-    }
+    let names = [...new Set(examSubjects.filter(Boolean))];
+    if (!names.length) names = (saved || []).map(s => s.Subject_Name || s.Subject).filter(Boolean);
     select.innerHTML = '<option value="">Select subject</option>' + names.map(name =>
         `<option value="${escapeQuestionHtml(name)}">${escapeQuestionHtml(name)}</option>`).join('');
 }
@@ -27,6 +37,7 @@ function escapeQuestionHtml(value) {
 
 async function loadQuestions() {
     questions = await fetchData('Questions');
+    await loadQuestionSubjects();
     currentQuestionPage = 1;
     renderQuestionsPage();
 }
@@ -62,6 +73,7 @@ document.getElementById('question-form').addEventListener('submit', async event 
     button.disabled = true;
     button.textContent = document.getElementById('edit-row-index').value ? 'Updating...' : 'Saving...';
     const data = [
+        document.getElementById('exam_name').value,
         document.getElementById('subject').value,
         document.getElementById('question').value,
         document.getElementById('opt_a').value,
@@ -97,6 +109,8 @@ function showQuestionToast(message, type) {
 function editQuestion(index) {
     const q = questions[index];
     document.getElementById('edit-row-index').value = q._rowIndex || index + 2;
+    document.getElementById('exam_name').value = q.Exam_Name || '';
+    loadQuestionSubjects();
     const subjectSelect = document.getElementById('subject');
     const subjectName = String(q.Subject || '').trim();
     if (subjectName && ![...subjectSelect.options].some(option => option.value === subjectName)) {

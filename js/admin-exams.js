@@ -123,13 +123,14 @@ const examForm = document.getElementById("exam-form");
 let editingRowIndex = null;
 if (examForm) {
     examForm.addEventListener("submit", async function(e) {
-        e.preventDefAUlt();
+        e.preventDefault();
         const btn = document.getElementById("e-submit-btn");
         const msg = document.getElementById("e-message");
         
-        btn.innerText = "Saving Configuration...";
+        btn.innerText = editingRowIndex === null ? "Saving Configuration..." : "Updating Configuration...";
         btn.disabled = true;
-        msg.innerText = "";
+            msg.innerText = "Processing...";
+            msg.style.color = "#64748b";
 
         const rowData = [
             document.getElementById("exam_name").value.trim(),

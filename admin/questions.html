@@ -37,6 +37,19 @@
         
         .btn-submit { background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 20px; transition: 0.2s; }
         .btn-submit:hover { background: #7c3aed; }
+        .question-action { border:0; border-radius:6px; padding:7px 12px; color:#fff; font-size:13px; font-weight:600; cursor:pointer; margin-right:5px; }
+        .question-edit { background:#2563eb; }
+        .question-delete { background:#ef4444; }
+        .question-edit:hover { background:#1d4ed8; }
+        .question-delete:hover { background:#dc2626; }
+        .questions-pagination { display:flex; justify-content:center; align-items:center; gap:14px; margin-top:20px; color:#64748b; font-size:13px; }
+        .page-btn { border:0; border-radius:6px; padding:8px 14px; background:#2563eb; color:#fff; font-weight:600; cursor:pointer; }
+        .page-btn:hover { background:#1d4ed8; }
+        .page-btn:disabled { background:#cbd5e1; cursor:not-allowed; }
+        .question-toast { position:fixed; right:24px; top:24px; z-index:9999; padding:13px 18px; border-radius:8px; color:#fff; font-weight:600; box-shadow:0 8px 25px rgba(0,0,0,.18); animation:toastIn .25s ease; }
+        .question-toast.success { background:#16a34a; }
+        .question-toast.error { background:#dc2626; }
+        @keyframes toastIn { from { transform:translateY(-12px); opacity:0; } to { transform:translateY(0); opacity:1; } }
         .btn-cancel { background: #64748b; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 20px; margin-left: 10px; display: none; }
         
         /* Table Styles */
@@ -98,7 +111,7 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label>Subject</label>
-                        <input type="text" id="subject" placeholder="e.g., Life Science" required>
+                        <select id="subject" required><option value="">Select subject</option></select>
                     </div>
                     <div class="form-group">
                         <label>Correct Answer</label>
@@ -123,6 +136,7 @@
 
                     <div class="form-group"><label>Mark</label><input type="number" id="mark" step="any" value="1" required></div>
                     <div class="form-group"><label>Negative Mark</label><input type="number" id="negative_mark" step="any" value="0.25" required></div>
+                    <div class="form-group full-width"><label>Question Image URL (optional)</label><input type="url" id="image_url" placeholder="https://example.com/image.jpg"></div>
                     
                     <!-- Time is kept hidden or defAUlt to 0 since global timer is used, but keeping ID to prevent JS errors -->
                     <input type="hidden" id="time" value="0">
@@ -151,6 +165,7 @@
                         <tr><td colspan="4" style="text-align: center;">Loading data...</td></tr>
                     </tbody>
                 </table>
+                <div id="questions-pagination" class="questions-pagination"></div>
             </div>
         </div>
 

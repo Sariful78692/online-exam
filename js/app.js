@@ -4,6 +4,9 @@ let timerInterval;
 let loggedInStudent = null;
 let TOTAL_EXAM_MINUTES = 180; 
 let GLOBAL_FONT_SIZE = "16px"; 
+let currentQuestionIndex = 0;
+let selectedAnswers = [];
+let availableSubjects = [];
 
 window.onload = async () => {
     const studentDataStr = sessionStorage.getItem("loggedInStudent");
@@ -16,9 +19,10 @@ window.onload = async () => {
     document.getElementById("student-name").innerText = loggedInStudent.Name; 
 
     try {
-        const [questionsData, settingsData] = await Promise.all([
+        const [questionsData, settingsData, subjectsData] = await Promise.all([
             fetchData("Questions"),
-            fetchData("Settings")
+            fetchData("Settings"),
+            fetchData("Subjects")
         ]);
 
         if (settingsData && settingsData.length > 0) {
@@ -34,9 +38,12 @@ window.onload = async () => {
         }
 
         allData = questionsData;
+        availableSubjects = (subjectsData || []).map(s => s.Subject_Name || s.Subject).filter(Boolean);
+        if (!availableSubjects.length) availableSubjects = [...new Set(allData.map(item => item.Subject).filter(Boolean))];
         
         if (allData && allData.length > 0) {
             setupSidebarSubjects();
+            translateStudentPanel();
         } else {
             document.getElementById('subject-selection').innerHTML = "<p>কোনো প্রশ্ন পাওয়া যায়নি।</p>";
             document.getElementById('subject-sidebar-list').innerHTML = "<li><a href='#'>কোনো বিষয় নেই</a></li>";
@@ -51,9 +58,18 @@ function logout() {
     window.location.href = "index.html";
 }
 
+function translateStudentPanel() {
+    const logoutButton = document.querySelector('.logout-btn-sidebar');
+    if (logoutButton) logoutButton.textContent = 'Logout';
+    const instruction = document.querySelector('#subject-selection p');
+    if (instruction) instruction.textContent = 'Select a subject from the menu to start your exam.';
+    const submitButton = document.getElementById('submit-exam-btn');
+    if (submitButton && !submitButton.disabled) submitButton.textContent = 'Submit Exam';
+}
+
 // সাইডবারে ডাইনামিক সাবজেক্ট মেনু তৈরি করার ফাংশন
 function setupSidebarSubjects() {
-    const subjects = [...new Set(allData.map(item => item.Subject))]; 
+    const subjects = availableSubjects.length ? availableSubjects : [...new Set(allData.map(item => item.Subject))];
     const sidebarList = document.getElementById('subject-sidebar-list');
     sidebarList.innerHTML = "";
 
@@ -96,11 +112,18 @@ function selectSubject(subjectName, element) {
         <p style="color: #64748b; line-height: 1.6;">এই পরীক্ষায় মোট <b>${subjectQuestions.length}টি</b> প্রশ্ন রয়েছে। সর্বমোট নম্বর <b>${totalMarks}</b> এবং পরীক্ষার জন্য নির্ধারিত সময় <b>${TOTAL_EXAM_MINUTES} মিনিট</b>।</p>
         <button onclick="startExam('${subjectName}')" class="btn-submit" style="width: AUto; margin-top: 15px;">পরীক্ষা শুরু করুন</button>
     `;
+    const startButton = document.querySelector('#subject-selection .btn-submit');
+    if (startButton) startButton.textContent = 'Start Exam';
 }
 
 function startTimer(minutes) {
     let timeInSeconds = minutes * 60;
+    const totalSeconds = timeInSeconds;
+    clearInterval(timerInterval);
+    updateTimerDisplay(timeInSeconds, totalSeconds);
     timerInterval = setInterval(() => {
+        timeInSeconds--;
+        updateTimerDisplay(timeInSeconds, totalSeconds);
         let m = Math.floor(timeInSeconds / 60);
         let s = timeInSeconds % 60;
         document.getElementById('time-left').innerText = `${m < 10 ? "0"+m : m}:${s < 10 ? "0"+s : s}`;
@@ -110,39 +133,78 @@ function startTimer(minutes) {
             alert("আপনার সময় শেষ! স্বয়ংক্রিয়ভাবে খাতা জমা হচ্ছে।");
             submitExam(); 
         }
-        timeInSeconds--;
     }, 1000);
+}
+
+function updateTimerDisplay(timeInSeconds, totalSeconds) {
+    const progress = Math.max(0, (timeInSeconds / totalSeconds) * 100);
+    const minutes = Math.floor(Math.max(0, timeInSeconds) / 60);
+    const seconds = Math.max(0, timeInSeconds) % 60;
+    document.getElementById('time-left').innerText = `${minutes < 10 ? '0' + minutes : minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+    document.getElementById('timer-progress').style.width = `${progress}%`;
+    document.getElementById('timer-progress').classList.toggle('warning', progress <= 30);
+}
+
+function cancelExam() {
+    if (!confirm('আপনি কি পরীক্ষা বাতিল করে ফিরে যেতে চান? আপনার দেওয়া উত্তর সংরক্ষণ করা হবে না।')) return;
+    clearInterval(timerInterval);
+    document.getElementById('quiz-container').style.display = 'none';
+    document.getElementById('result-container').style.display = 'none';
+    document.getElementById('subject-selection').style.display = 'block';
+    setupSidebarSubjects();
 }
 
 function startExam(selectedSubject) {
     currentQuestions = allData.filter(q => q.Subject === selectedSubject);
+    currentQuestionIndex = 0;
+    selectedAnswers = new Array(currentQuestions.length).fill(null);
     
     document.getElementById('subject-selection').style.display = "none";
     document.getElementById('quiz-container').style.display = "block";
     document.getElementById('exam-title').innerText = `${selectedSubject} Examination`;
+    translateStudentPanel();
 
     let questionsHtml = "";
 
     currentQuestions.forEach((q, index) => {
         questionsHtml += `
         <div class="question-block" style="font-size: ${GLOBAL_FONT_SIZE}; margin-bottom: 25px; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
-            <p><b>প্রশ্ন ${index + 1}:</b> ${q.Question} <br><small style="color: #64748b;">(সঠিক: +${q.Mark} | ভুল: -${q.Negative_Mark})</small></p>
+            ${q.Image_URL || q.Image || q.Time ? `<img class="question-image" src="${q.Image_URL || q.Image || q.Time}" alt="Question image" loading="lazy" onerror="this.style.display='none'">` : ''}
+            <p><b class="question-label">Question ${index + 1}:</b> <span class="question-text">${renderQuestionContent(q.Question)}</span><br><small style="color: #64748b;">(+${q.Mark} correct | -${q.Negative_Mark} wrong)</small></p>
             <div class="options" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
-                <label><input type="radio" name="q${index}" value="A"> A) ${q.Option_A}</label>
-                <label><input type="radio" name="q${index}" value="B"> B) ${q.Option_B}</label>
-                <label><input type="radio" name="q${index}" value="C"> C) ${q.Option_C}</label>
-                <label><input type="radio" name="q${index}" value="D"> D) ${q.Option_D}</label>
+                <label><input type="radio" name="q${index}" value="A" onchange="showQuestion(currentQuestionIndex)"> A) ${q.Option_A}</label>
+                <label><input type="radio" name="q${index}" value="B" onchange="showQuestion(currentQuestionIndex)"> B) ${q.Option_B}</label>
+                <label><input type="radio" name="q${index}" value="C" onchange="showQuestion(currentQuestionIndex)"> C) ${q.Option_C}</label>
+                <label><input type="radio" name="q${index}" value="D" onchange="showQuestion(currentQuestionIndex)"> D) ${q.Option_D}</label>
             </div>
         </div>`;
     });
     
     document.getElementById('questions-list').innerHTML = questionsHtml;
+    document.getElementById('question-navigator').innerHTML = currentQuestions.map((q, index) => `<button type="button" class="question-number ${index === currentQuestionIndex ? 'active' : ''}" onclick="showQuestion(${index})">${index + 1}</button>`).join('');
+    showQuestion(0);
 
-    if (window.MathJax) {
-        MathJax.typesetPromise();
-    }
+    if (window.MathJax) MathJax.typesetPromise([document.getElementById('questions-list')]);
     
     startTimer(TOTAL_EXAM_MINUTES); 
+}
+
+function renderQuestionContent(value) {
+    return String(value || '').replace(/\\\\/g, '\\');
+}
+
+function showQuestion(index) {
+    currentQuestionIndex = index;
+    document.querySelectorAll('.question-block').forEach((block, i) => block.style.display = i === index ? 'block' : 'none');
+    document.querySelectorAll('.question-number').forEach((button, i) => {
+        button.classList.toggle('active', i === index);
+        button.classList.toggle('answered', Boolean(document.querySelector(`input[name="q${i}"]:checked`)));
+    });
+    document.getElementById('next-question-btn').disabled = index === currentQuestions.length - 1;
+}
+
+function goToNextQuestion() {
+    if (currentQuestionIndex < currentQuestions.length - 1) showQuestion(currentQuestionIndex + 1);
 }
 
 async function submitExam() {

@@ -245,6 +245,16 @@
             background: #fee2e2;
             color: #ef4444;
         }
+        .subject-field-row { display:flex; gap:8px; align-items:center; }
+        .subject-field-row select { flex:1; }
+        .btn-add-subject { padding:10px 12px; border:0; border-radius:8px; background:#ede9fe; color:#7c3aed; font-weight:600; cursor:pointer; white-space:nowrap; }
+        .btn-add-subject:hover { background:#ddd6fe; }
+        .btn-subject-action { padding:10px 11px; border:0; border-radius:8px; color:#fff; font-weight:600; cursor:pointer; white-space:nowrap; }
+        .edit-subject { background:#2563eb; }
+        .delete-subject { background:#ef4444; }
+        .edit-subject:hover { background:#1d4ed8; }
+        .delete-subject:hover { background:#dc2626; }
+        .btn-subject-action:disabled, .btn-add-subject:disabled { opacity:.55; cursor:not-allowed; }
     </style>
 </head>
 
@@ -302,17 +312,25 @@
                     </div>
                     <div class="form-group">
                         <label for="exam_subject">Subject</label>
-                        <input type="text" id="exam_subject" list="subject-suggestions" placeholder="Type subject name"
-                            required>
-                        <datalist id="subject-suggestions"></datalist>
+                        <div class="subject-field-row">
+                            <select id="exam_subject" required><option value="">Select subject</option></select>
+                            <button type="button" id="add-subject-btn" class="btn-add-subject">+ Add</button>
+                            <button type="button" id="edit-subject-btn" class="btn-subject-action edit-subject">Edit</button>
+                            <button type="button" id="delete-subject-btn" class="btn-subject-action delete-subject">Delete</button>
+                        </div>
+                        <input type="text" id="manual_subject" placeholder="Type new subject name" style="display:none;">
                     </div>
                     <div class="form-group">
                         <label>Exam Duration (Minutes)</label>
                         <input type="number" id="exam_duration" placeholder="e.g., 60" required>
                     </div>
                     <div class="form-group">
-                        <label>Pass Mark</label>
-                        <input type="number" id="pass_mark" placeholder="e.g., 33" required>
+                        <label>Full Marks</label>
+                        <input type="number" id="full_marks" placeholder="e.g., 100" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Pass Mark (Optional)</label>
+                        <input type="number" id="pass_mark" placeholder="Optional">
                     </div>
                     <div class="form-group">
                         <label>Status</label>
@@ -337,6 +355,7 @@
                         <th>Exam Name</th>
                         <th>Subject</th>
                         <th>Duration</th>
+                        <th>Full Marks</th>
                         <th>Pass Mark</th>
                         <th>Status</th>
                         <th>Action</th>
@@ -344,7 +363,7 @@
                 </thead>
                 <tbody id="exams-table-body">
                     <tr>
-                        <td colspan="6" style="text-align: center;">Loading data...</td>
+                        <td colspan="7" style="text-align: center;">Loading data...</td>
                     </tr>
                 </tbody>
             </table>

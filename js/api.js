@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbwG6J-UTD24ZwW0l7_VEQucJUj5a4jrXCI0UHTiRQX8zXNOKM531d6_xjRSWGe07mIy/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzS5achJPytNdRiVk2ZPpODfQwWxUV8DaPnzTcwLgzAQe4Fcw0nGVlPLtsulzUlLj-N/exec";
 
 async function fetchData(sheetName) {
     try {
@@ -25,7 +25,13 @@ async function saveData(sheetName, data, action = "add", rowIndex = null) {
                 rowIndex: rowIndex 
             })
         });
-        return await response.json();
+        const responseText = await response.text();
+        try {
+            return JSON.parse(responseText);
+        } catch (parseError) {
+            console.error('API returned non-JSON response:', responseText.slice(0, 200));
+            return { status: 'error', message: `API error (${response.status})` };
+        }
     } catch (error) {
         console.error("Save error:", error);
         return { status: "error" };

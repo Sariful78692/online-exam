@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Questions - Admin Panel</title>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root { --primary: #8b5cf6; --primary-light: #ede9fe; --bg-color: #f3f4f6; --sidebar-bg: #ffffff; --text-dark: #1f2937; --text-gray: #6b7280; --border-color: #e5e7eb; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Sidebar Styles */
+        .sidebar { width: 260px; background-color: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 15px; overflow-y: AUto; }
+        .logo-area { display: flex; align-items: center; gap: 10px; padding: 10px; margin-bottom: 20px; font-size: 18px; font-weight: 700; color: var(--primary); }
+        .logo-area i { background: var(--primary); color: white; padding: 8px; border-radius: 8px; font-size: 14px; }
+        .menu-category { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 10px 10px; }
+        .sidebar-menu { list-style: none; }
+        .sidebar-menu li a { display: flex; align-items: center; gap: 12px; padding: 10px 12px; color: var(--text-gray); text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 500; transition: all 0.3s ease; margin-bottom: 4px; }
+        .sidebar-menu li a:hover, .sidebar-menu li a.active { background-color: var(--primary-light); color: var(--primary); }
+        .sidebar-menu li a i { font-size: 16px; width: 20px; text-align: center; }
+        
+        /* Main Content */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: AUto; padding: 30px; }
+        .form-container, .table-container { background: white; padding: 25px; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 30px; }
+        .form-container h2, .table-container h2 { font-size: 18px; color: var(--text-dark); margin-bottom: 20px; }
+        
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        .form-group.full-width { grid-column: span 2; }
+        .form-group label { font-size: 13px; font-weight: 600; color: var(--text-dark); }
+        .form-group input, .form-group select, .form-group textarea { padding: 10px 15px; border: 1px solid var(--border-color); border-radius: 8px; outline: none; font-size: 14px; font-family: 'Inter', sans-serif; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary); }
+        
+        .btn-submit { background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 20px; transition: 0.2s; }
+        .btn-submit:hover { background: #7c3aed; }
+        .btn-cancel { background: #64748b; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 20px; margin-left: 10px; display: none; }
+        
+        /* Table Styles */
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { padding: 12px 10px; border-bottom: 1px solid var(--border-color); color: var(--text-gray); font-size: 13px; }
+        td { padding: 15px 10px; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: var(--text-dark); }
+        .correct-ans { color: #10b981; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+   <!-- Sidebar Section -->
+    <aside class="sidebar">
+        <div class="logo-area">
+            <i class="fa-solid fa-graduation-cap"></i>
+            Sariful Tech
+        </div>
+
+        <div class="menu-category">Main</div>
+        <ul class="sidebar-menu">
+            <li><a href="index.html"><i class="fa-solid fa-border-all"></i> Dashboard</a></li>
+            <li><a href="exams.html"><i class="fa-solid fa-book-open"></i> Exams</a></li>
+            <li><a href="lms.html"><i class="fa-solid fa-chalkboard-user"></i> LMS</a></li>
+            <li><a href="questions.html"><i class="fa-solid fa-clipboard-question"></i> Questions</a></li>
+            <li><a href="students.html"><i class="fa-solid fa-user-group"></i> Students</a></li>
+        </ul>
+
+        <div class="menu-category">Management</div>
+        <ul class="sidebar-menu">
+            <li><a href="results.html"><i class="fa-solid fa-database"></i> Results Database</a></li>
+            <li><a href="#"><i class="fa-solid fa-chart-line"></i> Statistics</a></li>
+            <li><a href="#"><i class="fa-solid fa-certificate"></i> Certificates</a></li>
+        </ul>
+
+        <div class="menu-category">System</div>
+        <ul class="sidebar-menu">
+            <li><a href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a></li>
+            <li><a href="#"><i class="fa-solid fa-circle-info"></i> Help</a></li>
+        </ul>
+
+        <div class="sidebar-profile">
+            <img src="https://ui-avatars.com/api/?name=Admin+User&background=8b5cf6&color=fff" alt="Profile">
+            <div class="sidebar-profile-info">
+                <h4>Sariful Sk</h4>
+                <p>sarifulislam55@gmail.com</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Section -->
+    <main class="main-content">
+        
+        <!-- Add/Edit Question Form -->
+        <div class="form-container">
+            <h2 id="form-title"><i class="fa-solid fa-circle-plus" style="color: var(--primary);"></i> Add New Question</h2>
+            <form id="question-form">
+                <input type="hidden" id="edit-row-index" value=""> 
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Subject</label>
+                        <input type="text" id="subject" placeholder="e.g., Life Science" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Correct Answer</label>
+                        <select id="correct_answer" required>
+                            <option value="">-- Select --</option>
+                            <option value="A">Option A</option>
+                            <option value="B">Option B</option>
+                            <option value="C">Option C</option>
+                            <option value="D">Option D</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label>Question</label>
+                        <textarea id="question" rows="2" placeholder="Write your question here..." required></textarea>
+                    </div>
+
+                    <div class="form-group"><label>Option A</label><input type="text" id="opt_a" required></div>
+                    <div class="form-group"><label>Option B</label><input type="text" id="opt_b" required></div>
+                    <div class="form-group"><label>Option C</label><input type="text" id="opt_c" required></div>
+                    <div class="form-group"><label>Option D</label><input type="text" id="opt_d" required></div>
+
+                    <div class="form-group"><label>Mark</label><input type="number" id="mark" step="any" value="1" required></div>
+                    <div class="form-group"><label>Negative Mark</label><input type="number" id="negative_mark" step="any" value="0.25" required></div>
+                    
+                    <!-- Time is kept hidden or defAUlt to 0 since global timer is used, but keeping ID to prevent JS errors -->
+                    <input type="hidden" id="time" value="0">
+                </div>
+
+                <button type="submit" class="btn-submit" id="q-submit-btn">Save Question</button>
+                <button type="button" class="btn-cancel" id="cancel-edit-btn" onclick="resetForm()">Cancel Edit</button>
+                <p id="q-message" style="margin-top:10px; font-weight:500;"></p>
+            </form>
+        </div>
+
+        <!-- Question List Table -->
+        <div class="table-container">
+            <h2>Question Database</h2>
+            <div style="overflow-x:AUto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Question</th>
+                            <th>Correct Ans</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="questions-table-body">
+                        <tr><td colspan="4" style="text-align: center;">Loading data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Scripts (Make sure these are correct based on your folder structure) -->
+    <script src="../js/api.js"></script>
+<script src="../js/admin-questions.js"></script>
+</body>
+</html>

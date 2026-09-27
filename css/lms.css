@@ -1,0 +1,258 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --primary: #8b5cf6;
+    --primary-light: #ede9fe;
+    --bg-color: #f3f4f6;
+    --sidebar-bg: #ffffff;
+    --text-dark: #1f2937;
+    --text-gray: #6b7280;
+    --border-color: #e5e7eb;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 260px;
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 20px 15px;
+    overflow-y: AUto;
+}
+
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    margin-bottom: 20px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.logo-area i {
+    background: var(--primary);
+    color: white;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.menu-category {
+    font-size: 11px;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 20px 0 10px 10px;
+}
+
+.sidebar-menu {
+    list-style: none;
+}
+
+.sidebar-menu li a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    color: var(--text-gray);
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    margin-bottom: 4px;
+}
+
+.sidebar-menu li a:hover,
+.sidebar-menu li a.active {
+    background-color: var(--primary-light);
+    color: var(--primary);
+}
+
+.sidebar-menu li a i {
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+}
+
+/* Main Content & Header */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: AUto;
+    padding: 30px;
+}
+
+.top-header {
+    margin-bottom: 30px;
+}
+
+.header-greeting h1 {
+    font-size: 24px;
+    color: var(--text-dark);
+    margin-bottom: 4px;
+}
+
+.header-greeting p {
+    font-size: 13px;
+    color: var(--text-gray);
+}
+
+/* Form Container */
+.form-container,
+.table-container {
+    background: white;
+    padding: 25px;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 30px;
+}
+
+.form-container h2,
+.table-container h2 {
+    font-size: 18px;
+    color: var(--text-dark);
+    margin-bottom: 20px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.form-group input,
+.form-group select {
+    padding: 10px 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    outline: none;
+    font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--primary);
+}
+
+/* Buttons & Utils */
+.btn-submit {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    margin-top: 20px;
+    width: fit-content;
+    transition: 0.2s;
+}
+
+.btn-submit:hover {
+    background: #7c3aed;
+}
+
+.message {
+    margin-top: 10px;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.text-center {
+    text-align: center;
+}
+
+/* Table */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+th {
+    padding: 12px 10px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-gray);
+    font-size: 13px;
+}
+
+td {
+    padding: 15px 10px;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 14px;
+    color: var(--text-dark);
+}
+
+.type-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.type-pdf {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+.type-video {
+    background: #dbeafe;
+    color: #3b82f6;
+}
+
+.type-link {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+.btn-delete {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.btn-view {
+    background: #10b981;
+    color: white;
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    margin-right: 5px;
+}

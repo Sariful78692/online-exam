@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Students - Admin Panel</title>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root { --primary: #8b5cf6; --primary-light: #ede9fe; --bg-color: #f3f4f6; --sidebar-bg: #ffffff; --text-dark: #1f2937; --text-gray: #6b7280; --border-color: #e5e7eb; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Sidebar Styles */
+        .sidebar { width: 260px; background-color: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 15px; overflow-y: AUto; }
+        .logo-area { display: flex; align-items: center; gap: 10px; padding: 10px; margin-bottom: 20px; font-size: 18px; font-weight: 700; color: var(--primary); }
+        .logo-area i { background: var(--primary); color: white; padding: 8px; border-radius: 8px; font-size: 14px; }
+        .menu-category { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 10px 10px; }
+        .sidebar-menu { list-style: none; }
+        .sidebar-menu li a { display: flex; align-items: center; gap: 12px; padding: 10px 12px; color: var(--text-gray); text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 500; transition: all 0.3s ease; margin-bottom: 4px; }
+        .sidebar-menu li a:hover, .sidebar-menu li a.active { background-color: var(--primary-light); color: var(--primary); }
+        .sidebar-menu li a i { font-size: 16px; width: 20px; text-align: center; }
+        
+        /* User Profile in Sidebar */
+        .sidebar-profile { margin-top: AUto; display: flex; align-items: center; gap: 10px; padding: 15px 10px; border-top: 1px solid var(--border-color); }
+        .sidebar-profile img { width: 35px; height: 35px; border-radius: 50%; }
+        .sidebar-profile-info h4 { font-size: 14px; color: var(--text-dark); }
+        .sidebar-profile-info p { font-size: 12px; color: var(--text-gray); }
+
+        /* Main Content */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: AUto; padding: 30px; }
+        .table-container { background: white; padding: 25px; border-radius: 16px; border: 1px solid var(--border-color); }
+        .table-container h2 { font-size: 18px; color: var(--text-dark); margin-bottom: 20px; }
+        
+        /* Table Styles */
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { padding: 12px 10px; border-bottom: 1px solid var(--border-color); color: var(--text-gray); font-size: 13px; }
+        td { padding: 15px 10px; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: var(--text-dark); }
+        .btn-delete { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .btn-delete:hover { background: #dc2626; }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar Section -->
+    <aside class="sidebar">
+        <div class="logo-area">
+            <i class="fa-solid fa-graduation-cap"></i>
+            Sariful Tech
+        </div>
+        <div class="menu-category">Main</div>
+        <ul class="sidebar-menu">
+            <li><a href="index.html"><i class="fa-solid fa-border-all"></i> Dashboard</a></li>
+            <li><a href="exams.html"><i class="fa-solid fa-book-open"></i> Exams</a></li>
+            <li><a href="lms.html"><i class="fa-solid fa-chalkboard-user"></i> LMS</a></li>
+            <li><a href="questions.html"><i class="fa-solid fa-clipboard-question"></i> Questions</a></li>
+            <li><a href="students.html" class="active"><i class="fa-solid fa-user-group"></i> Students</a></li>
+        </ul>
+        <div class="menu-category">Management</div>
+        <ul class="sidebar-menu">
+            <li><a href="results.html"><i class="fa-solid fa-database"></i> Results Database</a></li>
+            <li><a href="#"><i class="fa-solid fa-chart-line"></i> Statistics</a></li>
+            <li><a href="#"><i class="fa-solid fa-certificate"></i> Certificates</a></li>
+        </ul>
+        <div class="menu-category">System</div>
+        <ul class="sidebar-menu">
+            <li><a href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a></li>
+            <li><a href="#"><i class="fa-solid fa-circle-info"></i> Help</a></li>
+        </ul>
+        <div class="sidebar-profile">
+            <img src="https://ui-avatars.com/api/?name=Admin+User&background=8b5cf6&color=fff" alt="Profile">
+            <div class="sidebar-profile-info">
+                <h4>Sariful Sk</h4>
+                <p>sarifulislam55@gmail.com</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Section -->
+    <main class="main-content">
+        <div class="table-container">
+            <h2><i class="fa-solid fa-users" style="color: var(--primary);"></i> Registered Students</h2>
+            <div style="overflow-x:AUto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Name</th>
+                            <th>Phone / Email</th>
+                            <th>Password</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="students-table-body">
+                        <tr><td colspan="5" style="text-align: center;">Loading students data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="../js/api.js"></script>
+    <script src="../js/admin-students.js"></script>
+</body>
+</html>

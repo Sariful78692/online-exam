@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMS - Study Materials</title>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- External CSS -->
+    <link rel="stylesheet" href="../css/lms.css">
+</head>
+<body>
+
+    <!-- Sidebar Section -->
+    <aside class="sidebar">
+        <div class="logo-area">
+            <i class="fa-solid fa-graduation-cap"></i>
+            Sariful Tech
+        </div>
+
+        <div class="menu-category">Main</div>
+        <ul class="sidebar-menu">
+            <li><a href="index.html"><i class="fa-solid fa-border-all"></i> Dashboard</a></li>
+            <li><a href="exams.html"><i class="fa-solid fa-book-open"></i> Exams</a></li>
+            <li><a href="lms.html"><i class="fa-solid fa-chalkboard-user"></i> LMS</a></li>
+            <li><a href="questions.html"><i class="fa-solid fa-clipboard-question"></i> Questions</a></li>
+            <li><a href="students.html"><i class="fa-solid fa-user-group"></i> Students</a></li>
+        </ul>
+
+        <div class="menu-category">Management</div>
+        <ul class="sidebar-menu">
+            <li><a href="results.html"><i class="fa-solid fa-database"></i> Results Database</a></li>
+            <li><a href="#"><i class="fa-solid fa-chart-line"></i> Statistics</a></li>
+            <li><a href="#"><i class="fa-solid fa-certificate"></i> Certificates</a></li>
+        </ul>
+
+        <div class="menu-category">System</div>
+        <ul class="sidebar-menu">
+            <li><a href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a></li>
+            <li><a href="#"><i class="fa-solid fa-circle-info"></i> Help</a></li>
+        </ul>
+
+        <div class="sidebar-profile">
+            <img src="https://ui-avatars.com/api/?name=Admin+User&background=8b5cf6&color=fff" alt="Profile">
+            <div class="sidebar-profile-info">
+                <h4>Sariful Sk</h4>
+                <p>sarifulislam55@gmail.com</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Section -->
+    <main class="main-content">
+        <header class="top-header">
+            <div class="header-greeting">
+                <h1>Learning Management System</h1>
+                <p>Upload and manage study materials for students.</p>
+            </div>
+        </header>
+
+        <!-- Add Material Form -->
+        <div class="form-container">
+            <h2><i class="fa-solid fa-cloud-arrow-up" style="color: var(--primary);"></i> Upload New Material</h2>
+            <form id="lms-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Material Title</label>
+                        <input type="text" id="mat_title" placeholder="e.g., Motion Chapter Formula Sheet" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Subject</label>
+                        <input type="text" id="mat_subject" placeholder="e.g., Physical Science" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Material Type</label>
+                        <select id="mat_type" required>
+                            <option value="PDF">PDF Document</option>
+                            <option value="Video">Video Link (YouTube)</option>
+                            <option value="Link">Web Article / Link</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Resource URL (Drive/YouTube Link)</label>
+                        <input type="url" id="mat_link" placeholder="https://..." required>
+                    </div>
+                </div>
+                <button type="submit" class="btn-submit" id="lms-submit-btn">Upload Material</button>
+                <p id="lms-message" class="message"></p>
+            </form>
+        </div>
+
+        <!-- Materials List Table -->
+        <div class="table-container">
+            <h2>Uploaded Materials</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Title</th>
+                        <th>Subject</th>
+                        <th>Type</th>
+                        <th>Link</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="lms-table-body">
+                    <tr><td colspan="6" class="text-center">Loading materials...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/admin-lms.js"></script>
+</body>
+</html>

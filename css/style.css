@@ -1,0 +1,277 @@
+/* Google Font Import */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* Global Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f4f7f6;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* =========================================
+   Admin Panel Layout (Sidebar & Main)
+   ========================================= */
+.admin-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 260px;
+    background: #1e293b; /* Modern Dark Blue/Gray */
+    color: #ffffff;
+    padding-top: 30px;
+    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+}
+
+.sidebar h2 {
+    text-align: center;
+    font-weight: 600;
+    font-size: 22px;
+    border-bottom: 1px solid #334155;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+}
+
+.sidebar ul {
+    list-style: none;
+}
+
+.sidebar ul li a {
+    display: flex;
+    align-items: center;
+    padding: 15px 25px;
+    color: #cbd5e1;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    border-left: 4px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.sidebar ul li a:hover, 
+.sidebar ul li a.active {
+    background: #334155;
+    color: #ffffff;
+    border-left: 4px solid #3b82f6; /* Blue highlight */
+    padding-left: 30px;
+}
+
+.main-content {
+    flex: 1;
+    padding: 40px;
+    background-color: #f8fafc;
+}
+
+/* =========================================
+   Container & Cards
+   ========================================= */
+.container {
+    max-width: 850px;
+    margin: 0 AUto;
+    background: #ffffff;
+    padding: 35px 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+}
+
+.container h1, .container h2 {
+    color: #0f172a;
+    margin-bottom: 25px;
+    font-weight: 600;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 10px;
+}
+
+/* =========================================
+   Forms & Inputs
+   ========================================= */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: #475569;
+    font-size: 14px;
+}
+
+.form-group input, 
+.form-group textarea, 
+.form-group select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 15px;
+    background-color: #f8fafc;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus, 
+.form-group textarea:focus, 
+.form-group select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* =========================================
+   Buttons
+   ========================================= */
+.btn-submit {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: #ffffff;
+    border: none;
+    padding: 12px 25px;
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 10px;
+    width: 100%;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+}
+
+.btn-submit:hover {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(37, 99, 235, 0.3);
+}
+
+.btn-submit:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* =========================================
+   Student Exam Page Specific Styles
+   ========================================= */
+#timer {
+    background: #fee2e2;
+    color: #ef4444;
+    padding: 10px 20px;
+    border-radius: 50px;
+    display: inline-block;
+    /* float: left; */
+    margin-top: -65px; /* Aligns with header */
+    border: 1px solid #fca5a5;
+}
+
+.question-block {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    transition: border-color 0.3s ease;
+}
+
+.question-block:hover {
+    border-color: #cbd5e1;
+}
+
+.question-block p {
+    font-size: 16px;
+    color: #1e293b;
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+.question-block small {
+    color: #64748b;
+    font-weight: 400;
+    display: block;
+    margin-top: 5px;
+}
+
+.options label {
+    display: block;
+    background: #f8fafc;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.options label:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+.options input[type="radio"] {
+    margin-right: 10px;
+    transform: scale(1.2);
+    cursor: pointer;
+}
+
+/* Message Styles */
+#q-message, #s-message {
+    text-align: center;
+    padding-top: 15px;
+    font-size: 15px;
+}
+
+
+
+/* =========================================
+   Table Styles for Results Page
+   ========================================= */
+.result-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+
+.result-table thead {
+    background-color: #1e293b;
+    color: #ffffff;
+}
+
+.result-table th, .result-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.result-table th {
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+}
+
+.result-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.result-table tbody tr:hover {
+    background-color: #f1f5f9;
+}
+
+.result-table tbody tr:last-of-type {
+    border-bottom: 2px solid #3b82f6;
+}

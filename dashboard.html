@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Online Exam</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        /* স্টুডেন্ট প্যানেলের জন্য সাইডবার লেআউট স্টাইল */
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; }
+        .student-wrapper { display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background-color: #1e293b; color: #ffffff; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; }
+        .sidebar h2 { font-size: 20px; margin-bottom: 20px; text-align: center; color: #38bdf8; border-bottom: 1px solid #334155; padding-bottom: 15px; }
+        .sidebar ul { list-style: none; padding: 0; margin: 0; flex-grow: 1; }
+        .sidebar ul li { margin-bottom: 8px; }
+        .sidebar ul li a { display: block; color: #cbd5e1; text-decoration: none; padding: 10px 15px; border-radius: 6px; transition: 0.2s; font-size: 15px; cursor: pointer; }
+        .sidebar ul li a:hover, .sidebar ul li a.active { background-color: #0ea5e9; color: #ffffff; }
+        .main-content { flex-grow: 1; padding: 30px; overflow-y: AUto; }
+        .logout-btn-sidebar { background: #ef4444; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; text-align: center; }
+        .logout-btn-sidebar:hover { background: #dc2626; }
+    </style>
+</head>
+<body>
+    
+    <div class="student-wrapper">
+        <!-- Sidebar Menu (डাইনামিক সাবজেক্ট লিস্ট এখানে আসবে) -->
+        <aside class="sidebar">
+            <div>
+                <h2>স্টুডেন্ট প্যানেল</h2>
+                <ul id="subject-sidebar-list">
+                    <li><a href="#" class="active">লোড হচ্ছে...</a></li>
+                </ul>
+            </div>
+            <div>
+                <button class="logout-btn-sidebar" onclick="logout()">লগআউট</button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <div class="container" style="max-width: 800px; background: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                <h2>স্বাগতম, <span id="student-name" style="color: #0ea5e9;"></span></h2>
+                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+                
+                <!-- Subject Selection Info / View -->
+                <div id="subject-selection">
+                    <p>দয়া করে বাম পাশের মেনু থেকে যেকোনো একটি বিষয় নির্বাচন করুন।</p>
+                </div>
+
+                <!-- Quiz Container -->
+                <div id="quiz-container" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2 id="exam-title" style="margin: 0; color: #1e293b;"></h2>
+                        <div id="timer" style="font-size: 15px; font-weight: bold; color: #dc2626; background: #fee2e2; padding: 6px 14px; border-radius: 20px;">
+                            সময় বাকি: <span id="time-left">00:00</span>
+                        </div>
+                    </div>
+
+                    <div id="questions-list"></div>
+                    <button onclick="submitExam()" class="btn-submit" id="submit-exam-btn" style="margin-top: 20px;">পরীক্ষা শেষ করুন</button>
+                </div>
+
+                <!-- Result Container -->
+                <div id="result-container" style="display: none; text-align: center;">
+                    <h2>আপনার পরীক্ষার ফলাফল</h2>
+                    <div id="score-text" style="font-size: 18px; line-height: 1.8; margin-top: 20px;"></div>
+                    <button onclick="location.reload()" class="btn-submit" style="width: AUto; margin-top: 20px;">ড্যাশবোর্ডে ফিরে যান</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

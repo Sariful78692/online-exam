@@ -72,6 +72,7 @@
         <ul class="sidebar-menu">
             <li><a href="index.html"><i class="fa-solid fa-border-all"></i> Dashboard</a></li>
             <li><a href="exams.html"><i class="fa-solid fa-book-open"></i> Exams</a></li>
+            <li><a href="combined-subject.html"><i class="fa-solid fa-layer-group"></i> Combined Subject</a></li>
             <li><a href="lms.html"><i class="fa-solid fa-chalkboard-user"></i> LMS</a></li>
             <li><a href="questions.html"><i class="fa-solid fa-clipboard-question"></i> Questions</a></li>
             <li><a href="students.html"><i class="fa-solid fa-user-group"></i> Students</a></li>
@@ -107,6 +108,7 @@
             <h2 id="form-title"><i class="fa-solid fa-circle-plus" style="color: var(--primary);"></i> Add New Question</h2>
             <form id="question-form">
                 <input type="hidden" id="edit-row-index" value=""> 
+                <input type="hidden" id="question-id" value="">
                 
                 <div class="form-grid">
                     <div class="form-group">
@@ -116,6 +118,10 @@
                     <div class="form-group">
                         <label>Subject</label>
                         <select id="subject" required><option value="">Select subject</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Question Number (serial)</label>
+                        <input type="number" id="question_number" min="1" step="1" required>
                     </div>
                     <div class="form-group">
                         <label>Correct Answer</label>
@@ -159,14 +165,17 @@
                 <table>
                     <thead>
                         <tr>
+                            <th>Question No.</th>
                             <th>Subject</th>
                             <th>Question</th>
                             <th>Correct Ans</th>
+                            <th>Mark</th>
+                            <th>Negative Mark</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody id="questions-table-body">
-                        <tr><td colspan="4" style="text-align: center;">Loading data...</td></tr>
+                        <tr><td colspan="7" style="text-align: center;">Loading data...</td></tr>
                     </tbody>
                 </table>
                 <div id="questions-pagination" class="questions-pagination"></div>

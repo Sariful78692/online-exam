@@ -1,12 +1,49 @@
-let allData = [];
+﻿let allData = [];
 let currentQuestions = [];
 let timerInterval;
 let loggedInStudent = null;
 let TOTAL_EXAM_MINUTES = 180; 
+const COMBINED_EXAM_MINUTES = 180;
 let GLOBAL_FONT_SIZE = "16px"; 
 let currentQuestionIndex = 0;
 let selectedAnswers = [];
 let availableSubjects = [];
+let currentExamSubjects = [];
+let availableMockExams = [];
+let currentMockExam = null;
+let subjectDurations = new Map();
+let activeExamSubject = null;
+let completedExamKeys = new Set();
+let currentAttemptName = "";
+let studentResults = [];
+
+function normalizeSubjectName(value) {
+    const subject = String(value || "").trim().toLocaleLowerCase();
+    // Older question rows use "Physic" while combined exams may use "Physics".
+    return subject === "physic" ? "physics" : subject;
+}
+
+function getSubjectDuration(subject) {
+    return subjectDurations.get(normalizeSubjectName(subject)) || TOTAL_EXAM_MINUTES;
+}
+
+function normalizeCorrectOption(value) {
+    const answer = String(value || "").trim().toUpperCase();
+    const match = answer.match(/(?:^|\b)([ABCD])(?:\b|$)/);
+    return match ? match[1] : answer;
+}
+
+function firstNonEmptyResultValue(...values) {
+    return values.find(value => value !== undefined && value !== null && String(value).trim() !== '');
+}
+
+function createAttemptKey(examName) {
+    return `${String(loggedInStudent?.Student_ID || "").trim().toLocaleLowerCase()}|${String(examName || "").trim().toLocaleLowerCase()}`;
+}
+
+function hasCompletedExam(examName) {
+    return completedExamKeys.has(createAttemptKey(examName));
+}
 
 window.onload = async () => {
     const studentDataStr = sessionStorage.getItem("loggedInStudent");
@@ -17,12 +54,16 @@ window.onload = async () => {
     
     loggedInStudent = JSON.parse(studentDataStr);
     document.getElementById("student-name").innerText = loggedInStudent.Name; 
+    document.getElementById("sidebar-student-name").innerText = loggedInStudent.Name || "Student";
+    document.getElementById("sidebar-student-id").innerText = loggedInStudent.Student_ID || "Student account";
 
     try {
-        const [questionsData, settingsData, subjectsData] = await Promise.all([
+        const [questionsData, settingsData, subjectsData, examsData, resultsData] = await Promise.all([
             fetchData("Questions"),
             fetchData("Settings"),
-            fetchData("Subjects")
+            fetchData("Subjects"),
+            fetchData("Exams"),
+            fetchData("Results")
         ]);
 
         if (settingsData && settingsData.length > 0) {
@@ -37,9 +78,73 @@ window.onload = async () => {
             }
         }
 
-        allData = questionsData;
-        availableSubjects = (subjectsData || []).map(s => s.Subject_Name || s.Subject).filter(Boolean);
-        if (!availableSubjects.length) availableSubjects = [...new Set(allData.map(item => item.Subject).filter(Boolean))];
+        allData = questionsData || [];
+        completedExamKeys = new Set((resultsData || [])
+            .filter(result => String(result.Student_ID || "") === String(loggedInStudent.Student_ID || ""))
+            .map(result => createAttemptKey(result.Exam_Name || result.Subject)));
+        studentResults = (resultsData || []).filter(result => String(result.Student_ID || "") === String(loggedInStudent.Student_ID || ""));
+        const localAttemptPrefix = `exam-completed:${String(loggedInStudent.Student_ID || "").trim().toLocaleLowerCase()}|`;
+        Object.keys(localStorage).forEach(storageKey => {
+            if (storageKey.startsWith(localAttemptPrefix)) completedExamKeys.add(storageKey.slice("exam-completed:".length));
+        });
+        availableSubjects = [...new Map((subjectsData || [])
+            .map(s => s.Subject_Name || s.Subject)
+            .filter(Boolean)
+            .map(subject => [normalizeSubjectName(subject), String(subject).trim()])).values()];
+        if (!availableSubjects.length) {
+            availableSubjects = [...new Map(allData
+                .map(item => item.Subject)
+                .filter(Boolean)
+                .map(subject => [normalizeSubjectName(subject), String(subject).trim()])).values()];
+        }
+        availableMockExams = getCombinedExams(examsData || []);
+        subjectDurations = new Map();
+        (examsData || []).forEach(exam => {
+            const status = normalizeSubjectName(exam.Status);
+            const duration = Number(exam.Duration);
+            if (!exam.Subject || duration <= 0 || status === "combined" || (status && status !== "active")) return;
+            subjectDurations.set(normalizeSubjectName(exam.Subject), duration);
+        });
+        const combinedSubjectKeys = new Set(availableMockExams.flatMap(exam => exam.subjects.map(normalizeSubjectName)));
+        document.getElementById("subject-count").innerText = availableSubjects.filter(subject => !combinedSubjectKeys.has(normalizeSubjectName(subject))).length;
+        document.getElementById("question-count").innerText = allData.length;
+        document.getElementById("exam-duration").innerText = "Varies";
+        document.getElementById("exam-duration-unit").innerText = "by subject";
+
+        document.getElementById("dashboard-menu").addEventListener("click", event => {
+            event.preventDefault();
+            clearInterval(timerInterval);
+            document.getElementById("quiz-container").style.display = "none";
+            document.getElementById("result-container").style.display = "none";
+            document.getElementById("subject-selection").style.display = "block";
+            document.getElementById("exam-duration").innerText = "Varies";
+            document.getElementById("exam-duration-unit").innerText = "by subject";
+            document.querySelectorAll(".sidebar-menu a").forEach(link => link.classList.remove("active"));
+            document.getElementById("dashboard-menu").classList.add("active");
+            setupSidebarSubjects();
+        });
+        document.getElementById("combined-exam-menu").addEventListener("click", event => {
+            event.preventDefault();
+            clearInterval(timerInterval);
+            document.getElementById("quiz-container").style.display = "none";
+            document.getElementById("result-container").style.display = "none";
+            document.getElementById("subject-selection").style.display = "block";
+            document.getElementById("exam-duration").innerText = "Varies";
+            document.getElementById("exam-duration-unit").innerText = "by subject";
+            document.querySelectorAll(".sidebar-menu a").forEach(link => link.classList.remove("active"));
+            event.currentTarget.classList.add("active");
+            showCombinedExamSetup();
+        });
+        document.getElementById("result-view-menu").addEventListener("click", event => {
+            event.preventDefault();
+            clearInterval(timerInterval);
+            document.getElementById("quiz-container").style.display = "none";
+            document.getElementById("result-container").style.display = "none";
+            document.getElementById("subject-selection").style.display = "block";
+            document.querySelectorAll(".sidebar-menu a").forEach(link => link.classList.remove("active"));
+            event.currentTarget.classList.add("active");
+            showStudentResultView();
+        });
         
         if (allData && allData.length > 0) {
             setupSidebarSubjects();
@@ -69,7 +174,9 @@ function translateStudentPanel() {
 
 // সাইডবারে ডাইনামিক সাবজেক্ট মেনু তৈরি করার ফাংশন
 function setupSidebarSubjects() {
-    const subjects = availableSubjects.length ? availableSubjects : [...new Set(allData.map(item => item.Subject))];
+    const combinedSubjectKeys = new Set(availableMockExams.flatMap(exam => exam.subjects.map(normalizeSubjectName)));
+    const subjects = (availableSubjects.length ? availableSubjects : [...new Set(allData.map(item => item.Subject))])
+        .filter(subject => !combinedSubjectKeys.has(normalizeSubjectName(subject)));
     const sidebarList = document.getElementById('subject-sidebar-list');
     sidebarList.innerHTML = "";
 
@@ -89,13 +196,75 @@ function setupSidebarSubjects() {
     document.getElementById('subject-selection').innerHTML = `<p><b>নির্দেশনা:</b> বাম পাশের মেনু থেকে আপনার পছন্দের বিষয়টি সিলেক্ট করে পরীক্ষা শুরু করুন।</p>`;
 }
 
+function getCombinedExams(exams) {
+    const grouped = new Map();
+    (exams || []).forEach(exam => {
+        if (!exam.Exam_Name || !exam.Subject || normalizeSubjectName(exam.Status) !== "combined") return;
+        const name = String(exam.Exam_Name).trim();
+        const key = normalizeSubjectName(name);
+        if (!grouped.has(key)) grouped.set(key, { name, subjects: [], duration: 0, subjectDurations: new Map() });
+        const group = grouped.get(key);
+        if (!group.subjects.some(subject => normalizeSubjectName(subject) === normalizeSubjectName(exam.Subject))) {
+            group.subjects.push(String(exam.Subject).trim());
+            group.subjectDurations.set(normalizeSubjectName(exam.Subject), Number(exam.Duration) || 0);
+        }
+    });
+    return [...grouped.values()]
+        .filter(exam => exam.subjects.length >= 2)
+        .map(exam => ({
+            ...exam,
+            duration: exam.subjects.reduce((total, subject) =>
+                total + (exam.subjectDurations.get(normalizeSubjectName(subject)) || 0), 0) || COMBINED_EXAM_MINUTES
+        }));
+}
+
+function showCombinedExamSetup() {
+    const selection = document.getElementById("subject-selection");
+    if (!availableMockExams.length) {
+        selection.innerHTML = `<h2>Combined Subject Exams</h2><p>No active combined exam is configured yet. Ask the admin to create one from the Combined Subject menu.</p>`;
+        return;
+    }
+
+    const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
+    })[char]);
+    selection.innerHTML = `<h2>Combined Subject Exams</h2><p>Choose an exam configured by your admin. You can switch subjects during the exam; your answers will stay saved.</p>` +
+        availableMockExams.map((exam, index) => {
+            const counts = exam.subjects.map(subject => ({
+                subject,
+                count: allData.filter(question => normalizeSubjectName(question.Subject) === normalizeSubjectName(subject)).length
+            }));
+            const ready = counts.every(item => item.count > 0);
+            return `<article style="margin-top:16px;padding:16px;border:1px solid #e5e7eb;border-radius:12px;">
+                <h3 style="margin:0 0 8px;color:#1f2937;">${escapeHtml(exam.name)}</h3>
+                <p style="margin:0 0 12px;color:#6b7280;">${escapeHtml(exam.subjects.join(" · "))} · ${exam.duration} minutes</p>
+                <p style="margin:0 0 12px;color:${ready ? '#059669' : '#dc2626'};font-size:13px;">${counts.map(item => `${escapeHtml(item.subject)}: ${item.count} questions`).join(" · ")}</p>
+                <button type="button" class="btn-submit" data-mock-exam-index="${index}" style="width:auto;margin:0;" ${ready && !hasCompletedExam(exam.name) ? "" : "disabled"}>${hasCompletedExam(exam.name) ? "Completed" : ready ? "Start Combined Exam" : "Questions unavailable"}</button>
+            </article>`;
+        }).join("");
+    selection.querySelectorAll("[data-mock-exam-index]").forEach(button => button.addEventListener("click", () => {
+        startExam(availableMockExams[Number(button.dataset.mockExamIndex)]);
+    }));
+}
+
 // সাইডবার থেকে কোনো সাবজেক্ট সিলেক্ট করলে যা হবে
 function selectSubject(subjectName, element) {
     // মেনুর একটিভ ক্লাস কন্ট্রোল
     document.querySelectorAll('.sidebar ul li a').forEach(a => a.classList.remove('active'));
     element.classList.add('active');
 
-    const subjectQuestions = allData.filter(q => q.Subject === subjectName);
+    if (hasCompletedExam(subjectName)) {
+        document.getElementById('subject-selection').style.display = 'block';
+        document.getElementById('quiz-container').style.display = 'none';
+        document.getElementById('result-container').style.display = 'none';
+        document.getElementById('subject-selection').innerHTML = `<h2>${subjectName}</h2><p class="exam-completed-note">You have completed this exam. You cannot attempt it again.</p>`;
+        return;
+    }
+
+    const subjectQuestions = allData.filter(q => normalizeSubjectName(q.Subject) === normalizeSubjectName(subjectName));
+    const subjectDuration = getSubjectDuration(subjectName);
+    document.getElementById("exam-duration").innerText = subjectDuration;
+    document.getElementById("exam-duration-unit").innerText = "min";
     let totalMarks = 0;
     subjectQuestions.forEach(q => {
         let qMark = parseFloat(q.Mark);
@@ -109,7 +278,7 @@ function selectSubject(subjectName, element) {
 
     document.getElementById('subject-selection').innerHTML = `
         <h3 style="color: #1e293b; margin-top: 0;">বিষয়: ${subjectName}</h3>
-        <p style="color: #64748b; line-height: 1.6;">এই পরীক্ষায় মোট <b>${subjectQuestions.length}টি</b> প্রশ্ন রয়েছে। সর্বমোট নম্বর <b>${totalMarks}</b> এবং পরীক্ষার জন্য নির্ধারিত সময় <b>${TOTAL_EXAM_MINUTES} মিনিট</b>।</p>
+        <p style="color: #64748b; line-height: 1.6;">এই পরীক্ষায় মোট <b>${subjectQuestions.length}টি</b> প্রশ্ন রয়েছে। সর্বমোট নম্বর <b>${totalMarks}</b> এবং পরীক্ষার জন্য নির্ধারিত সময় <b>${subjectDuration} মিনিট</b>।</p>
         <button onclick="startExam('${subjectName}')" class="btn-submit" style="width: AUto; margin-top: 15px;">পরীক্ষা শুরু করুন</button>
     `;
     const startButton = document.querySelector('#subject-selection .btn-submit');
@@ -155,13 +324,29 @@ function cancelExam() {
 }
 
 function startExam(selectedSubject) {
-    currentQuestions = allData.filter(q => q.Subject === selectedSubject);
+    currentMockExam = selectedSubject && !Array.isArray(selectedSubject) && typeof selectedSubject === "object"
+        ? selectedSubject
+        : null;
+    currentAttemptName = currentMockExam ? currentMockExam.name : String(selectedSubject);
+    if (hasCompletedExam(currentAttemptName)) {
+        alert("You have already completed this exam. A second attempt is not allowed.");
+        return;
+    }
+    currentExamSubjects = currentMockExam
+        ? currentMockExam.subjects
+        : (Array.isArray(selectedSubject) ? selectedSubject : [selectedSubject]);
+    const selectedSubjectKeys = currentExamSubjects.map(normalizeSubjectName);
+    currentQuestions = allData.filter(q => selectedSubjectKeys.includes(normalizeSubjectName(q.Subject)));
+    activeExamSubject = currentExamSubjects.length > 1 ? currentExamSubjects[0] : null;
     currentQuestionIndex = 0;
     selectedAnswers = new Array(currentQuestions.length).fill(null);
     
     document.getElementById('subject-selection').style.display = "none";
     document.getElementById('quiz-container').style.display = "block";
-    document.getElementById('exam-title').innerText = `${selectedSubject} Examination`;
+    document.getElementById('exam-title').innerText = currentMockExam
+        ? `${currentMockExam.subjects.length}-Subject Combined Exam: ${currentMockExam.name}`
+        : (currentExamSubjects.length > 1 ? `${currentExamSubjects.length}-Subject Combined Exam: ${currentExamSubjects.join(", ")}`
+            : `${selectedSubject} Examination`);
     translateStudentPanel();
 
     let questionsHtml = "";
@@ -170,7 +355,7 @@ function startExam(selectedSubject) {
         questionsHtml += `
         <div class="question-block" style="font-size: ${GLOBAL_FONT_SIZE}; margin-bottom: 25px; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
             ${q.Image_URL || q.Image || q.Time ? `<img class="question-image" src="${q.Image_URL || q.Image || q.Time}" alt="Question image" loading="lazy" onerror="this.style.display='none'">` : ''}
-            <p><b class="question-label">Question ${index + 1}:</b> <span class="question-text">${renderQuestionContent(q.Question)}</span><br><small style="color: #64748b;">(+${q.Mark} correct | -${q.Negative_Mark} wrong)</small></p>
+            <p><small style="color:#8b5cf6;font-weight:600;">${q.Subject}</small><br><b class="question-label">Question ${getQuestionDisplayNumber(index)}:</b> <span class="question-text">${renderQuestionContent(q.Question)}</span><br><small style="color: #64748b;">(+${q.Mark} correct | -${q.Negative_Mark} wrong)</small></p>
             <div class="options" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
                 <label><input type="radio" name="q${index}" value="A" onchange="showQuestion(currentQuestionIndex)"> A) ${q.Option_A}</label>
                 <label><input type="radio" name="q${index}" value="B" onchange="showQuestion(currentQuestionIndex)"> B) ${q.Option_B}</label>
@@ -181,12 +366,64 @@ function startExam(selectedSubject) {
     });
     
     document.getElementById('questions-list').innerHTML = questionsHtml;
-    document.getElementById('question-navigator').innerHTML = currentQuestions.map((q, index) => `<button type="button" class="question-number ${index === currentQuestionIndex ? 'active' : ''}" onclick="showQuestion(${index})">${index + 1}</button>`).join('');
+    renderExamSubjectTabs();
+    renderQuestionNavigator();
     showQuestion(0);
 
     if (window.MathJax) MathJax.typesetPromise([document.getElementById('questions-list')]);
     
-    startTimer(TOTAL_EXAM_MINUTES); 
+    const examDuration = currentMockExam
+        ? currentMockExam.duration
+        : (currentExamSubjects.length > 1 ? COMBINED_EXAM_MINUTES : getSubjectDuration(currentExamSubjects[0]));
+    document.getElementById("exam-duration").innerText = examDuration;
+    document.getElementById("exam-duration-unit").innerText = "min";
+    startTimer(examDuration);
+}
+
+function renderExamSubjectTabs() {
+    const tabs = document.getElementById("exam-subject-tabs");
+    tabs.replaceChildren();
+    tabs.style.display = currentExamSubjects.length > 1 ? "flex" : "none";
+    currentExamSubjects.forEach(subject => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "exam-subject-tab";
+        button.textContent = subject;
+        button.addEventListener("click", () => {
+            activeExamSubject = subject;
+            renderQuestionNavigator();
+            const firstIndex = currentQuestions.findIndex(question => normalizeSubjectName(question.Subject) === normalizeSubjectName(subject));
+            if (firstIndex >= 0) showQuestion(firstIndex);
+        });
+        tabs.appendChild(button);
+    });
+}
+
+function getVisibleQuestionIndices() {
+    return currentQuestions
+        .map((question, index) => ({ question, index }))
+        .filter(item => !activeExamSubject || normalizeSubjectName(item.question.Subject) === normalizeSubjectName(activeExamSubject))
+        .map(item => item.index);
+}
+
+function getQuestionDisplayNumber(questionIndex) {
+    const subjectKey = normalizeSubjectName(currentQuestions[questionIndex]?.Subject);
+    const sectionStarts = new Map([["physics", 1], ["chemistry", 46], ["biology", 91]]);
+    if (sectionStarts.has(subjectKey)) {
+        const subjectQuestionIndices = currentQuestions
+            .map((question, index) => ({ question, index }))
+            .filter(item => normalizeSubjectName(item.question.Subject) === subjectKey)
+            .map(item => item.index);
+        return sectionStarts.get(subjectKey) + subjectQuestionIndices.indexOf(questionIndex);
+    }
+    return getVisibleQuestionIndices().indexOf(questionIndex) + 1;
+}
+
+function renderQuestionNavigator() {
+    const visibleIndices = getVisibleQuestionIndices();
+    document.getElementById('question-navigator').innerHTML = visibleIndices.map(questionIndex =>
+        `<button type="button" class="question-number ${questionIndex === currentQuestionIndex ? 'active' : ''}" onclick="showQuestion(${questionIndex})">${getQuestionDisplayNumber(questionIndex)}</button>`
+    ).join('');
 }
 
 function renderQuestionContent(value) {
@@ -194,55 +431,78 @@ function renderQuestionContent(value) {
 }
 
 function showQuestion(index) {
+    if (index < 0 || index >= currentQuestions.length) return;
     currentQuestionIndex = index;
-    document.querySelectorAll('.question-block').forEach((block, i) => block.style.display = i === index ? 'block' : 'none');
-    document.querySelectorAll('.question-number').forEach((button, i) => {
-        button.classList.toggle('active', i === index);
-        button.classList.toggle('answered', Boolean(document.querySelector(`input[name="q${i}"]:checked`)));
+    document.querySelectorAll('.question-block').forEach((block, i) => {
+        const matchesSubject = !activeExamSubject || normalizeSubjectName(currentQuestions[i].Subject) === normalizeSubjectName(activeExamSubject);
+        block.style.display = matchesSubject && i === index ? 'block' : 'none';
     });
-    document.getElementById('next-question-btn').disabled = index === currentQuestions.length - 1;
+    const visibleIndices = getVisibleQuestionIndices();
+    document.querySelectorAll('.question-number').forEach((button, visibleIndex) => {
+        const questionIndex = visibleIndices[visibleIndex];
+        button.classList.toggle('active', questionIndex === index);
+        button.classList.toggle('answered', Boolean(document.querySelector(`input[name="q${questionIndex}"]:checked`)));
+    });
+    const activeSubject = normalizeSubjectName(currentQuestions[index]?.Subject);
+    document.querySelectorAll(".exam-subject-tab").forEach(button => {
+        button.classList.toggle("active", normalizeSubjectName(button.textContent) === activeSubject);
+    });
+    document.getElementById('next-question-btn').disabled = visibleIndices.indexOf(index) === visibleIndices.length - 1;
 }
 
 function goToNextQuestion() {
-    if (currentQuestionIndex < currentQuestions.length - 1) showQuestion(currentQuestionIndex + 1);
+    const visibleIndices = getVisibleQuestionIndices();
+    const position = visibleIndices.indexOf(currentQuestionIndex);
+    if (position >= 0 && position < visibleIndices.length - 1) showQuestion(visibleIndices[position + 1]);
 }
 
 async function submitExam() {
-    clearInterval(timerInterval); 
-    
+    clearInterval(timerInterval);
     const submitBtn = document.getElementById("submit-exam-btn");
-    submitBtn.innerText = "রেজাল্ট প্রসেস হচ্ছে, দয়া করে অপেক্ষা করুন...";
+    submitBtn.textContent = "Submitting...";
     submitBtn.disabled = true;
 
     let score = 0, rightAnswers = 0, wrongAnswers = 0, missedAnswers = 0;
-
+    const reviewItems = [];
     currentQuestions.forEach((q, index) => {
         const selectedOption = document.querySelector(`input[name="q${index}"]:checked`);
-        if (selectedOption) {
-            if (selectedOption.value === q.Correct_Answer) {
-                score += parseFloat(q.Mark); rightAnswers++;
-            } else {
-                score -= parseFloat(q.Negative_Mark); wrongAnswers++;
-            }
-        } else { missedAnswers++; }
+        const selected = selectedOption ? selectedOption.value : "";
+        const correct = normalizeCorrectOption(q.Correct_Answer);
+        const status = !selected ? "missing" : selected === correct ? "correct" : "wrong";
+        if (status === "correct") { score += Number(q.Mark) || 1; rightAnswers++; }
+        else if (status === "wrong") { score -= Number(q.Negative_Mark) || 0; wrongAnswers++; }
+        else missedAnswers++;
+        reviewItems.push({
+            subject: q.Subject || "Other",
+            number: getQuestionDisplayNumber(index),
+            question: q.Question || "",
+            options: { A: q.Option_A || "", B: q.Option_B || "", C: q.Option_C || "", D: q.Option_D || "" },
+            selected, correct, status
+        });
     });
 
-    document.getElementById('quiz-container').style.display = "none";
-    document.getElementById('result-container').style.display = "block";
-    
-    document.getElementById('score-text').innerHTML = `
-        মোট প্রশ্ন: <b>${currentQuestions.length}</b><br>
-        সঠিক উত্তর: <b style="color: green;">${rightAnswers}</b><br>
-        ভুল উত্তর: <b style="color: red;">${wrongAnswers}</b><br>
-        বাদ দেওয়া: <b>${missedAnswers}</b><br><br>
-        <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; display: inline-block;">
-            সর্বমোট প্রাপ্ত নম্বর: <b style="font-size: 24px; color: #0f172a;">${score}</b>
-        </div>
-    `;
+    const attemptKey = createAttemptKey(currentAttemptName);
+    completedExamKeys.add(attemptKey);
+    try {
+        localStorage.setItem(`exam-review:${attemptKey}`, JSON.stringify(reviewItems));
+        localStorage.setItem(`exam-completed:${attemptKey}`, "1");
+    } catch (error) { console.warn("Could not save exam review on this device.", error); }
+
+    document.getElementById("quiz-container").style.display = "none";
+    document.getElementById("result-container").style.display = "block";
+    document.getElementById("score-text").innerHTML = `
+        <div class="result-summary-grid">
+            <div><span>Total questions</span><strong>${currentQuestions.length}</strong></div>
+            <div><span>Correct</span><strong class="result-correct">${rightAnswers}</strong></div>
+            <div><span>Wrong</span><strong class="result-wrong">${wrongAnswers}</strong></div>
+            <div><span>Unanswered</span><strong>${missedAnswers}</strong></div>
+            <div class="result-score"><span>Score</span><strong>${Number(score.toFixed(2))}</strong></div>
+        </div>`;
+    renderExamReview(reviewItems);
 
     const resultData = [
         loggedInStudent.Student_ID,
-        document.getElementById('exam-title').innerText.replace(" Examination", ""),
+        currentAttemptName,
         currentQuestions.length,
         rightAnswers + wrongAnswers,
         rightAnswers,
@@ -251,10 +511,125 @@ async function submitExam() {
         score,
         new Date().toLocaleString()
     ];
-    
-    try {
-        await saveData("Results", resultData);
-    } catch (e) {
-        console.error("Rejalt save hote shomossha hoyeche", e);
+    try { await saveData("Results", resultData); }
+    catch (error) { console.error("Could not save exam result.", error); }
+}
+
+function escapeReviewHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, character => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    })[character]);
+}
+
+function renderExamReview(items, containerId = "exam-review") {
+    const container = document.getElementById(containerId);
+    if (!items.length) {
+        container.innerHTML = '<div class="review-perfect"><strong>No question review available</strong><span>This exam was completed before detailed answer review was enabled.</span></div>';
+        return;
     }
+    const subjects = [...new Set(items.map(item => item.subject))];
+    container.innerHTML = '<h3 class="review-title">Review your answers</h3>' + subjects.map(subject => {
+        const subjectItems = items.filter(item => item.subject === subject);
+        return `<section class="review-subject"><h4>${escapeReviewHtml(subject)} <span>${subjectItems.length} questions</span></h4>` +
+            subjectItems.map(item => `<article class="review-question ${item.status}">
+                <div class="review-question-heading"><strong>Question ${escapeReviewHtml(item.number)}</strong><span class="review-status">${item.status === "missing" ? "Not answered" : item.status === "wrong" ? "Incorrect" : "Correct"}</span></div>
+                <p>${escapeReviewHtml(item.question)}</p>
+                <div class="review-answers">
+                    <span>Your answer: <b>${item.selected ? `${item.selected}) ${escapeReviewHtml(item.options[item.selected])}` : "No answer"}</b></span>
+                    <span>Correct answer: <b>${escapeReviewHtml(item.correct)}${item.correct && item.options[item.correct] ? `) ${escapeReviewHtml(item.options[item.correct])}` : ""}</b></span>
+                </div>
+            </article>`).join("") + '</section>';
+    }).join("");
+}
+
+function showStudentResultView() {
+    const panel = document.getElementById("subject-selection");
+    const prefix = `exam-review:${String(loggedInStudent.Student_ID || "").trim().toLocaleLowerCase()}|`;
+    const reviewNames = Object.keys(localStorage)
+        .filter(key => key.startsWith(prefix))
+        .map(key => key.slice(prefix.length));
+    const names = [...new Map([
+        ...studentResults.map(result => {
+            const examName = String(result.Exam_Name || result.Subject || "").trim();
+            return [examName.toLocaleLowerCase(), examName];
+        }),
+        ...reviewNames.map(name => [name.toLocaleLowerCase(), name])
+    ].filter(([key, name]) => key && name)).values()];
+
+    panel.innerHTML = '<h2>Result View</h2><p>Choose an exam to see subject-wise correct, wrong and unanswered questions.</p>' +
+        (names.length ? `<div class="student-result-list">${names.map((name, index) => {
+            const result = [...studentResults].reverse().find(row => String(row.Exam_Name || row.Subject || "").trim().toLocaleLowerCase() === name.toLocaleLowerCase());
+            return `<button type="button" class="student-result-card" data-result-name-index="${index}">
+                <span><strong>${escapeReviewHtml(name)}</strong><small>${escapeReviewHtml(result?.Date || "Completed exam")}</small></span>
+                <span class="student-result-score">${escapeReviewHtml(firstNonEmptyResultValue(result?.Score, result?.Total_Score, "View review"))} <small>score</small></span>
+            </button>`;
+        }).join("")}</div>` : '<div class="review-perfect"><strong>No completed exams yet</strong><span>Your completed exams and answer reviews will appear here.</span></div>');
+
+    panel.querySelectorAll("[data-result-name-index]").forEach(button => button.addEventListener("click", () => {
+        const name = names[Number(button.dataset.resultNameIndex)];
+        const attemptKey = createAttemptKey(name);
+        let details = [];
+        try { details = JSON.parse(localStorage.getItem(`exam-review:${attemptKey}`) || "[]"); } catch (_) { details = []; }
+        const result = [...studentResults].reverse().find(row => String(row.Exam_Name || row.Subject || "").trim().toLocaleLowerCase() === name.toLocaleLowerCase());
+        const resultTotal = Number(firstNonEmptyResultValue(result?.Total_Questions, result?.Total_Question, result?.Total_Qs, 0)) || 0;
+        if (details.length < resultTotal) {
+            const upgradedReview = completeOlderReview(details, result, name, resultTotal);
+            if (upgradedReview) {
+                details = upgradedReview;
+                try { localStorage.setItem(`exam-review:${attemptKey}`, JSON.stringify(details)); } catch (_) { }
+            }
+        }
+        const hasCompleteReview = resultTotal > 0 && details.length === resultTotal;
+        const counts = details.reduce((total, item) => {
+            if (item.status === "correct") total.right++;
+            else if (item.status === "wrong") total.wrong++;
+            else if (item.status === "missing") total.missed++;
+            return total;
+        }, { right: 0, wrong: 0, missed: 0 });
+        panel.innerHTML = `<button type="button" class="btn-next" id="result-view-back">← All results</button>
+            <h2 style="margin-top:18px;">${escapeReviewHtml(name)}</h2>
+            <p>Score: <b>${escapeReviewHtml(firstNonEmptyResultValue(result?.Score, result?.Total_Score, "—"))}</b> · Correct: <b>${hasCompleteReview ? counts.right : escapeReviewHtml(firstNonEmptyResultValue(result?.Right_Answers, result?.Correct, "—"))}</b> · Wrong: <b>${hasCompleteReview ? counts.wrong : escapeReviewHtml(firstNonEmptyResultValue(result?.Wrong_Answers, result?.Wrong_Answer, result?.Wrong, "—"))}</b> · Unanswered: <b>${hasCompleteReview ? counts.missed : escapeReviewHtml(firstNonEmptyResultValue(result?.Missed_Answers, result?.Missed_Answer, result?.Missed, "—"))}</b></p>
+            <div id="saved-exam-review"></div>`;
+        renderExamReview(details, "saved-exam-review");
+        document.getElementById("result-view-back").addEventListener("click", showStudentResultView);
+    }));
+}
+
+function completeOlderReview(savedDetails, result, examName, totalCount) {
+    const configuredExam = availableMockExams.find(exam => exam.name.toLocaleLowerCase() === String(examName).trim().toLocaleLowerCase());
+    const subjectKeys = configuredExam
+        ? configuredExam.subjects.map(normalizeSubjectName)
+        : availableSubjects.filter(subject => normalizeSubjectName(subject) === normalizeSubjectName(examName)).map(normalizeSubjectName);
+    const pool = allData.filter(question => subjectKeys.includes(normalizeSubjectName(question.Subject)));
+    if (pool.length !== totalCount) return null;
+
+    const keyFor = (subject, number) => `${normalizeSubjectName(subject)}|${String(number)}`;
+    const savedByQuestion = new Map(savedDetails.map(item => [keyFor(item.subject, item.number), item]));
+    const correctCount = Number(firstNonEmptyResultValue(result?.Right_Answers, result?.Correct, result?.Right, 0)) || 0;
+    const alreadyCorrect = savedDetails.filter(item => item.status === "correct").length;
+    const unrecorded = pool.map((question, index) => {
+        const subjectKey = normalizeSubjectName(question.Subject);
+        const sectionStart = new Map([["physics", 1], ["chemistry", 46], ["biology", 91]]).get(subjectKey);
+        const sameSubjectIndex = pool.slice(0, index).filter(item => normalizeSubjectName(item.Subject) === subjectKey).length;
+        const number = sectionStart ? sectionStart + sameSubjectIndex : index + 1;
+        return { question, number, key: keyFor(question.Subject, number) };
+    }).filter(item => !savedByQuestion.has(item.key));
+
+    // Older reviews stored only wrong and unanswered questions. Use the saved correct count
+    // to ensure every omitted database question is actually one of the correct answers.
+    if (unrecorded.length !== correctCount - alreadyCorrect) return null;
+    const upgraded = [...savedDetails];
+    unrecorded.forEach(({ question, number }) => {
+        const correct = normalizeCorrectOption(question.Correct_Answer);
+        upgraded.push({
+            subject: question.Subject || "Other",
+            number,
+            question: question.Question || "",
+            options: { A: question.Option_A || "", B: question.Option_B || "", C: question.Option_C || "", D: question.Option_D || "" },
+            selected: correct,
+            correct,
+            status: "correct"
+        });
+    });
+    return upgraded;
 }

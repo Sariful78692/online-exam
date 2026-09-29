@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Combined Subject - Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        :root { --primary:#8b5cf6; --primary-light:#ede9fe; --bg-color:#f3f4f6; --text-dark:#1f2937; --text-gray:#6b7280; --border-color:#e5e7eb; }
+        * { box-sizing:border-box; font-family:'Inter',sans-serif; }
+        body { margin:0; background:var(--bg-color); color:var(--text-dark); }
+        .layout { display:flex; min-height:100vh; }
+        .sidebar { width:260px; flex:0 0 260px; display:flex; flex-direction:column; padding:20px 15px; border-right:1px solid var(--border-color); background:#fff; }
+        .logo-area { display:flex; align-items:center; gap:10px; padding:10px; margin-bottom:20px; color:var(--primary); font-size:18px; font-weight:700; }
+        .logo-area i { padding:8px; border-radius:8px; background:var(--primary); color:#fff; font-size:14px; }
+        .menu-category { margin:20px 0 10px 10px; color:#9ca3af; font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; }
+        .sidebar-menu { margin:0; padding:0; list-style:none; }
+        .sidebar-menu a { display:flex; align-items:center; gap:12px; margin-bottom:4px; padding:10px 12px; border-radius:8px; color:var(--text-gray); text-decoration:none; font-size:14px; font-weight:500; }
+        .sidebar-menu a:hover,.sidebar-menu a.active { background:var(--primary-light); color:var(--primary); }
+        .sidebar-menu i { width:20px; text-align:center; }
+        .main-content { flex:1; min-width:0; padding:30px; overflow:auto; }
+        .panel { margin-bottom:24px; padding:25px; border:1px solid var(--border-color); border-radius:16px; background:#fff; }
+        h1 { margin:0 0 10px; font-size:20px; }
+        .description { margin:0 0 20px; color:var(--text-gray); font-size:13px; line-height:1.6; }
+        .form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+        .form-group { display:flex; flex-direction:column; gap:8px; }
+        .form-group label { font-size:13px; font-weight:600; }
+        .form-group input { padding:11px 14px; border:1px solid var(--border-color); border-radius:8px; font-size:14px; }
+        .form-group input:focus { outline:1px solid var(--primary); border-color:var(--primary); }
+        .subject-picker { margin-top:20px; }
+        .subject-picker h2,.table-panel h2 { margin:0 0 12px; font-size:16px; }
+        #subject-options { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:10px; }
+        .subject-option { display:flex; align-items:center; gap:10px; padding:12px; border:1px solid var(--border-color); border-radius:9px; color:var(--text-dark); font-size:14px; cursor:pointer; }
+        .subject-option:has(input:checked) { border-color:var(--primary); background:var(--primary-light); }
+        .subject-option input { accent-color:var(--primary); }
+        .btn-submit { margin-top:18px; padding:12px 20px; border:0; border-radius:8px; background:var(--primary); color:#fff; font-weight:600; cursor:pointer; }
+        .btn-submit:hover { background:#7c3aed; }
+        .btn-submit:disabled { opacity:.55; cursor:not-allowed; }
+        #form-message { font-size:13px; }
+        table { width:100%; border-collapse:collapse; text-align:left; }
+        th,td { padding:12px 10px; border-bottom:1px solid var(--border-color); font-size:13px; }
+        th { color:var(--text-gray); }
+        @media(max-width:760px) { .layout { flex-direction:column; } .sidebar { width:100%; flex-basis:auto; } .main-content { padding:18px 14px; } .form-grid { grid-template-columns:1fr; } }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="logo-area"><i class="fa-solid fa-graduation-cap"></i> Sariful Tech</div>
+            <div class="menu-category">Main</div>
+            <ul class="sidebar-menu">
+                <li><a href="index.html"><i class="fa-solid fa-border-all"></i> Dashboard</a></li>
+                <li><a href="exams.html"><i class="fa-solid fa-book-open"></i> Exams</a></li>
+                <li><a href="combined-subject.html" class="active"><i class="fa-solid fa-layer-group"></i> Combined Subject</a></li>
+                <li><a href="lms.html"><i class="fa-solid fa-chalkboard-user"></i> LMS</a></li>
+                <li><a href="questions.html"><i class="fa-solid fa-clipboard-question"></i> Questions</a></li>
+                <li><a href="students.html"><i class="fa-solid fa-user-group"></i> Students</a></li>
+            </ul>
+            <div class="menu-category">Management</div>
+            <ul class="sidebar-menu">
+                <li><a href="results.html"><i class="fa-solid fa-database"></i> Results Database</a></li>
+            </ul>
+            <div class="menu-category">System</div>
+            <ul class="sidebar-menu"><li><a href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a></li></ul>
+        </aside>
+        <main class="main-content">
+            <section class="panel">
+                <h1><i class="fa-solid fa-layer-group" style="color:var(--primary);"></i> Configure Combined Subject Exam</h1>
+                <p class="description">Subjects below are grouped by their exam name from Configure New Exam. Choose any two or more and enter a Combined Exam Name. On save, only the checked subjects move from the student's My Subjects list to Combined Subject Exam; unchecked subjects stay in My Subjects. Each selected subject keeps the shown duration, and the combined duration is their sum. If you use a new exam name, add its questions with that same name.</p>
+                <form id="combined-subject-form">
+                    <div class="form-grid">
+                        <div class="form-group"><label for="combined-exam-name">Combined Exam Name</label><input id="combined-exam-name" type="text" placeholder="e.g., NEET Mock Test 1" required></div>
+                    </div>
+                    <div class="subject-picker">
+                        <h2>Select subjects</h2>
+                        <div id="subject-options"><p>Loading subjects...</p></div>
+                        <p id="selected-count" class="description" style="margin:12px 0 0;">0 subjects selected · combined duration: 0 minutes (choose at least 2)</p>
+                    </div>
+                    <button type="submit" id="save-combined-exam" class="btn-submit" disabled>Save Combined Exam</button>
+                    <p id="form-message"></p>
+                </form>
+            </section>
+            <section class="panel table-panel">
+                <h2>Configured Combined Exams</h2>
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead><tr><th>Exam Name</th><th>Subjects</th><th>Total Duration</th><th>Status</th></tr></thead>
+                        <tbody id="combined-exams-list"><tr><td colspan="4">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="../js/api.js"></script>
+    <script src="../js/admin-combined-subject.js"></script>
+</body>
+</html>

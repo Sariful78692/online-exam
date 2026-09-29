@@ -43,10 +43,59 @@ function escapeHtml(value) {
 
 document.getElementById("add-subject-btn").addEventListener("click", function () {
     const input = document.getElementById("manual_subject");
-    input.style.display = input.style.display === "none" ? "block" : "none";
-    input.required = input.style.display === "block";
-    if (input.required) input.focus();
+    const button = this;
+    if (input.style.display === "none") {
+        input.style.display = "block";
+        input.required = true;
+        button.textContent = "Save Subject";
+        input.focus();
+        return;
+    }
+
+    saveSubjectName(input.value).then(saved => {
+        if (!saved) return;
+        input.value = "";
+        input.style.display = "none";
+        input.required = false;
+        button.textContent = "+ Add";
+    });
 });
+
+async function saveSubjectName(value) {
+    const name = String(value || "").trim();
+    const message = document.getElementById("e-message");
+    if (!name) {
+        message.style.color = "red";
+        message.textContent = "Enter a subject name first.";
+        return false;
+    }
+
+    const existing = subjectRows.find(row => normalizeSubjectName(row.Subject_Name || row.Subject) === normalizeSubjectName(name));
+    if (existing) {
+        document.getElementById("exam_subject").value = existing.Subject_Name || existing.Subject;
+        message.style.color = "#b45309";
+        message.textContent = "This subject is already saved and selected.";
+        return true;
+    }
+
+    const nextId = subjectRows.reduce((max, row) => Math.max(max, Number(row.Subject_ID) || 0), 0) + 1;
+    const result = await saveData("Subjects", [nextId, name], "add");
+    if (!result || result.status !== "success") {
+        message.style.color = "red";
+        message.textContent = result?.message || "Could not save the subject. Please try again.";
+        return false;
+    }
+
+    await loadSubjects();
+    document.getElementById("exam_subject").value = name;
+    message.style.color = "green";
+    message.textContent = `Subject "${name}" saved successfully.`;
+    return true;
+}
+
+function normalizeSubjectName(value) {
+    return String(value || "").trim().toLocaleLowerCase();
+}
 
 document.getElementById("edit-subject-btn").addEventListener("click", async function () {
     const select = document.getElementById("exam_subject");
@@ -94,7 +143,9 @@ async function loadExamsTable() {
 
         allExams.forEach((exam, index) => {
             const sheetRowIndex = index + 2; 
-            const statusBadge = exam.Status === "Active" 
+            const statusBadge = exam.Status === "Combined"
+                ? `<span class="badge combined"><i class="fa-solid fa-layer-group"></i> Combined</span>`
+                : exam.Status === "Active"
                 ? `<span class="badge active"><i class="fa-solid fa-check-circle"></i> Active</span>` 
                 : `<span class="badge inactive"><i class="fa-solid fa-times-circle"></i> Inactive</span>`;
 
@@ -124,6 +175,31 @@ let editingRowIndex = null;
 if (examForm) {
     examForm.addEventListener("submit", async function(e) {
         e.preventDefault();
+        const manualSubject = document.getElementById("manual_subject");
+        const examName = document.getElementById("exam_name").value.trim();
+        const subjectName = (manualSubject.style.display !== "none"
+            ? manualSubject.value
+            : document.getElementById("exam_subject").value).trim();
+        const duplicate = (allExams || []).some((exam, index) =>
+            index + 2 !== editingRowIndex &&
+            normalizeSubjectName(exam.Exam_Name) === normalizeSubjectName(examName) &&
+            normalizeSubjectName(exam.Subject) === normalizeSubjectName(subjectName));
+        if (duplicate) {
+            const msg = document.getElementById("e-message");
+            msg.style.color = "red";
+            msg.textContent = "This exam name and subject combination already exists.";
+            return;
+        }
+
+        if (manualSubject.style.display !== "none") {
+            const saved = await saveSubjectName(manualSubject.value);
+            if (!saved) return;
+            manualSubject.value = "";
+            manualSubject.style.display = "none";
+            manualSubject.required = false;
+            document.getElementById("add-subject-btn").textContent = "+ Add";
+        }
+
         const btn = document.getElementById("e-submit-btn");
         const msg = document.getElementById("e-message");
         
@@ -133,10 +209,8 @@ if (examForm) {
             msg.style.color = "#64748b";
 
         const rowData = [
-            document.getElementById("exam_name").value.trim(),
-            document.getElementById("manual_subject").style.display !== "none"
-                ? document.getElementById("manual_subject").value.trim()
-                : document.getElementById("exam_subject").value,
+            examName,
+            document.getElementById("exam_subject").value,
             document.getElementById("exam_duration").value,
             document.getElementById("full_marks").value,
             document.getElementById("pass_mark").value,
@@ -156,7 +230,7 @@ if (examForm) {
                 editingRowIndex = null;
                 document.getElementById("e-submit-btn").innerText = "Save Exam Configuration";
                 document.getElementById("e-cancel-btn").hidden = true;
-                loadExamsTable();
+                await loadExamsTable();
                 
                 setTimeout(() => {
                     msg.innerText = "";
@@ -192,7 +266,11 @@ function editExam(index) {
     document.getElementById("exam_duration").value = exam.Duration || "";
     document.getElementById("full_marks").value = exam.Full_Marks || exam.FullMarks || "";
     document.getElementById("pass_mark").value = exam.Pass_Mark || "";
-    document.getElementById("exam_status").value = exam.Status || "Active";
+    const statusSelect = document.getElementById("exam_status");
+    if (exam.Status === "Combined" && ![...statusSelect.options].some(option => option.value === "Combined")) {
+        statusSelect.add(new Option("Combined Subject (managed from Combined Subject menu)", "Combined"));
+    }
+    statusSelect.value = exam.Status || "Active";
     document.getElementById("e-submit-btn").innerText = "Update Exam Configuration";
     document.getElementById("e-cancel-btn").hidden = false;
     document.querySelector(".form-container").scrollIntoView({ behavior: "smooth" });

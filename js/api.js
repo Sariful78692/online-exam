@@ -2,7 +2,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzS5achJPytNdRiVk2ZPpOD
 
 async function fetchData(sheetName) {
     try {
-        const response = await fetch(`${API_URL}?sheet=${sheetName}`);
+        const response = await fetch(`${API_URL}?sheet=${encodeURIComponent(sheetName)}&_=${Date.now()}`, { cache: "no-store" });
         const data = await response.json();
         return data;
     } catch (error) {

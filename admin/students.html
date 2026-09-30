@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="../js/admin-auth.js?v=20260930-3"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Students - Admin Panel</title>
@@ -25,7 +26,7 @@
         
         /* User Profile in Sidebar */
         .sidebar-profile { margin-top: AUto; display: flex; align-items: center; gap: 10px; padding: 15px 10px; border-top: 1px solid var(--border-color); }
-        .sidebar-profile img { width: 35px; height: 35px; border-radius: 50%; }
+        .sidebar-avatar { display:grid; width:35px; height:35px; flex:0 0 35px; place-items:center; border-radius:50%; background:var(--primary); color:#fff; font-size:13px; font-weight:700; }
         .sidebar-profile-info h4 { font-size: 14px; color: var(--text-dark); }
         .sidebar-profile-info p { font-size: 12px; color: var(--text-gray); }
 
@@ -40,6 +41,23 @@
         td { padding: 15px 10px; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: var(--text-dark); }
         .btn-delete { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
         .btn-delete:hover { background: #dc2626; }
+        .btn-status { border:0; padding:6px 10px; border-radius:6px; cursor:pointer; color:#fff; font-size:12px; font-weight:600; }
+        .btn-deactivate { background:#f59e0b; }
+        .btn-deactivate:hover { background:#d97706; }
+        .btn-activate { background:#10b981; }
+        .btn-activate:hover { background:#059669; }
+        .students-heading { display:flex; align-items:center; justify-content:space-between; gap:14px; }
+        .students-heading h2 { margin-bottom:20px; }
+        .btn-add-student { border:0; border-radius:8px; padding:10px 14px; margin-bottom:20px; background:var(--primary); color:#fff; font-weight:600; cursor:pointer; }
+        .student-form { display:none; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; margin-bottom:20px; padding:18px; border:1px solid var(--border-color); border-radius:12px; background:#fafafa; }
+        .student-form.open { display:grid; }
+        .student-form label { display:grid; gap:6px; color:var(--text-gray); font-size:12px; font-weight:600; }
+        .student-form input { width:100%; padding:10px; border:1px solid var(--border-color); border-radius:7px; font-size:14px; }
+        .student-form-actions { display:flex; align-items:center; gap:8px; grid-column:1/-1; }
+        .student-form-actions button { border:0; border-radius:7px; padding:9px 13px; cursor:pointer; font-weight:600; }
+        .student-save { background:var(--primary); color:white; }
+        .student-cancel { background:#e5e7eb; color:var(--text-dark); }
+        #student-form-message { margin-right:auto; font-size:13px; }
     </style>
 </head>
 <body>
@@ -55,6 +73,7 @@
             <li><a href="index.html"><i class="fa-solid fa-border-all"></i> Dashboard</a></li>
             <li><a href="exams.html"><i class="fa-solid fa-book-open"></i> Exams</a></li>
             <li><a href="combined-subject.html"><i class="fa-solid fa-layer-group"></i> Combined Subject</a></li>
+            <li><a href="exam-schedule.html"><i class="fa-solid fa-calendar-days"></i> Exam Schedule</a></li>
             <li><a href="lms.html"><i class="fa-solid fa-chalkboard-user"></i> LMS</a></li>
             <li><a href="questions.html"><i class="fa-solid fa-clipboard-question"></i> Questions</a></li>
             <li><a href="students.html" class="active"><i class="fa-solid fa-user-group"></i> Students</a></li>
@@ -71,7 +90,7 @@
             <li><a href="#"><i class="fa-solid fa-circle-info"></i> Help</a></li>
         </ul>
         <div class="sidebar-profile">
-            <img src="https://ui-avatars.com/api/?name=Admin+User&background=8b5cf6&color=fff" alt="Profile">
+            <div class="sidebar-avatar" aria-label="Sariful Sk">SS</div>
             <div class="sidebar-profile-info">
                 <h4>Sariful Sk</h4>
                 <p>sarifulislam55@gmail.com</p>
@@ -82,7 +101,15 @@
     <!-- Main Content Section -->
     <main class="main-content">
         <div class="table-container">
-            <h2><i class="fa-solid fa-users" style="color: var(--primary);"></i> Registered Students</h2>
+            <div class="students-heading"><h2><i class="fa-solid fa-users" style="color: var(--primary);"></i> Registered Students</h2><button class="btn-add-student" type="button" id="show-student-form"><i class="fa-solid fa-user-plus"></i> Add Student</button></div>
+            <form id="student-form" class="student-form">
+                <label>Student ID<input name="studentId" required></label>
+                <label>Full Name<input name="name" required></label>
+                <label>Phone<input name="phone" type="tel"></label>
+                <label>Email<input name="email" type="email"></label>
+                <label>Password<input name="password" type="password" required></label>
+                <div class="student-form-actions"><span id="student-form-message" role="status"></span><button class="student-save" type="submit">Save Student</button><button class="student-cancel" type="button" id="cancel-student-form">Cancel</button></div>
+            </form>
             <div style="overflow-x:AUto;">
                 <table>
                     <thead>
@@ -91,11 +118,12 @@
                             <th>Name</th>
                             <th>Phone / Email</th>
                             <th>Password</th>
+                            <th>Status</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody id="students-table-body">
-                        <tr><td colspan="5" style="text-align: center;">Loading students data...</td></tr>
+                        <tr><td colspan="6" style="text-align: center;">Loading students data...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -103,7 +131,7 @@
     </main>
 
     <!-- Scripts -->
-    <script src="../js/api.js"></script>
-    <script src="../js/admin-students.js"></script>
+    <script src="../js/api.js?v=20260930-4"></script>
+    <script src="../js/admin-students.js?v=20260930-3"></script>
 </body>
 </html>

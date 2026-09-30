@@ -7,7 +7,6 @@
     <title>Student Dashboard - Online Exam</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -16,7 +15,7 @@
             --primary: #8b5cf6;
             --primary-light: #ede9fe;
             --bg-color: #f3f4f6;
-            --sidebar-bg: #fff;
+            --sidebar-bg: #effaf2;
             --text-dark: #1f2937;
             --text-gray: #6b7280;
             --border-color: #e5e7eb;
@@ -38,7 +37,7 @@
             width: 260px;
             flex: 0 0 260px;
             background: var(--sidebar-bg);
-            border-right: 1px solid var(--border-color);
+            border-right: 1px solid #d9efdf;
             display: flex;
             flex-direction: column;
             padding: 20px 15px;
@@ -82,7 +81,7 @@
             margin-bottom: 4px;
             padding: 10px 12px;
             border-radius: 8px;
-            color: var(--text-gray);
+            color: #2563eb;
             text-decoration: none;
             font-size: 14px;
             font-weight: 500;
@@ -91,6 +90,8 @@
 
         .sidebar-menu li a:hover,
         .sidebar-menu li a.active { background: var(--primary-light); color: var(--primary); }
+        .sidebar-menu li a { color: #1e3a8a; }
+        #subject-sidebar-list li a { color: #1e3a8a; }
         .sidebar-menu li a i { width: 20px; text-align: center; font-size: 16px; }
 
         .sidebar-profile {
@@ -184,6 +185,7 @@
 
         .stat-info h3 { margin: 0 0 8px; color: var(--text-gray); font-size: 13px; font-weight: 500; }
         .stat-info h2 { margin: 0; color: var(--text-dark); font-size: 26px; }
+        .stat-info .stat-detail { display:block; margin-top:5px; color:var(--text-gray); font-size:11px; font-weight:500; }
         .stat-icon { color: var(--primary); font-size: 25px; }
         .stat-icon.green { color: #10b981; }
         .stat-icon.amber { color: #f59e0b; }
@@ -198,6 +200,15 @@
         }
 
         .content-panel h2 { margin: 0 0 18px; color: var(--text-dark); font-size: 17px; }
+        .schedule-block { display:grid; gap:7px; margin:12px 0; padding:12px 14px; border:1px solid #ddd6fe; border-radius:10px; background:#f5f3ff; color:#4c1d95; }
+        .schedule-block small { color:#6b7280; font-size:12px; }
+        .schedule-block strong { font-size:14px; }
+        .schedule-block + .btn-submit { margin-top:0 !important; }
+        .profile-password-form { display:grid; gap:14px; max-width:460px; }
+        .profile-password-form label { display:grid; gap:6px; color:var(--text-gray); font-size:13px; font-weight:600; }
+        .profile-password-form input { padding:11px 12px; border:1px solid var(--border-color); border-radius:8px; font:inherit; }
+        .profile-password-form button { width:max-content; }
+        #profile-password-message { min-height:20px; font-size:13px; font-weight:600; }
         #subject-selection p { color: var(--text-gray); font-size: 14px; line-height: 1.7; }
         #subject-selection h3 { color: var(--text-dark) !important; }
         .quiz-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 20px; }
@@ -319,13 +330,15 @@
 <body>
     <div class="student-wrapper">
         <aside class="sidebar">
-            <div class="logo-area"><i class="fa-solid fa-graduation-cap"></i> Sariful Tech</div>
+            <div class="logo-area"><i class="fa-solid fa-graduation-cap"></i> <span id="panel-brand-name">Sariful Tech</span></div>
+            <script>(function(){const name=localStorage.getItem('Brand_Name');const label=document.getElementById('panel-brand-name');if(name&&label)label.textContent=name;})();</script>
 
             <div class="menu-category">Main</div>
             <ul class="sidebar-menu">
                 <li><a href="#dashboard" class="active" id="dashboard-menu"><i class="fa-solid fa-border-all"></i> Dashboard</a></li>
                 <li><a href="#combined-exam" id="combined-exam-menu"><i class="fa-solid fa-file-circle-check"></i> Combined Subject Exam</a></li>
                 <li><a href="#result-view" id="result-view-menu"><i class="fa-solid fa-square-poll-vertical"></i> Result View</a></li>
+                <li><a href="#profile" id="profile-menu"><i class="fa-solid fa-user"></i> Profile</a></li>
             </ul>
 
             <div class="menu-category">My Subjects</div>
@@ -354,7 +367,7 @@
 
             <section class="dashboard-grid" aria-label="Student overview">
                 <article class="stat-card">
-                    <div class="stat-info"><h3>Available Subjects</h3><h2 id="subject-count">—</h2></div>
+                    <div class="stat-info"><h3>Available Subjects</h3><h2 id="subject-count">—</h2><small class="stat-detail"><span id="combined-subject-count">0</span> included in combined exams</small></div>
                     <i class="stat-icon fa-solid fa-book-open"></i>
                 </article>
                 <article class="stat-card">
@@ -362,7 +375,7 @@
                     <i class="stat-icon green fa-solid fa-layer-group"></i>
                 </article>
                 <article class="stat-card">
-                    <div class="stat-info"><h3>Subject Duration</h3><h2><span id="exam-duration">Varies</span> <small id="exam-duration-unit" style="font-size:13px;font-weight:500;color:#6b7280;">by subject</small></h2></div>
+                    <div class="stat-info"><h3>Combined Exam Duration</h3><h2><span id="exam-duration">—</span> <small id="exam-duration-unit" style="font-size:13px;font-weight:500;color:#6b7280;">min</small></h2></div>
                     <i class="stat-icon amber fa-solid fa-clock"></i>
                 </article>
             </section>
@@ -401,8 +414,8 @@
         </main>
     </div>
 
-    <script src="js/api.js?v=20260929-2"></script>
-    <script src="js/app.js?v=20260930-18"></script>
+    <script src="js/api.js?v=20260930-6"></script>
+    <script src="js/app.js?v=20260930-28"></script>
 </body>
 
 </html>

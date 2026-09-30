@@ -1,58 +1,109 @@
-const loginForm = document.getElementById("login-form");
+const loginForm = document.getElementById('login-form');
+const registerForm = document.getElementById('register-form');
+const switchButton = document.getElementById('auth-switch-btn');
+let showingRegister = false;
 
-if (loginForm) {
-    loginForm.addEventListener("submit", async function(e) {
-        e.preventDefault();
-        
-        const btn = document.getElementById("login-btn");
-        const msg = document.getElementById("login-msg");
-        const enteredId = document.getElementById("login_id").value.trim();
-        const enteredPass = document.getElementById("login_pass").value.trim();
-        
-        btn.innerText = "যাচাই করা হচ্ছে...";
-        btn.disabled = true;
-        msg.innerText = "";
+switchButton.addEventListener('click', () => {
+    showingRegister = !showingRegister;
+    loginForm.style.display = showingRegister ? 'none' : 'block';
+    registerForm.style.display = showingRegister ? 'block' : 'none';
+    document.querySelector('.login-container > h2').textContent = showingRegister ? 'Student Registration' : 'Student login';
+    document.getElementById('auth-switch-prompt').textContent = showingRegister ? 'Already registered?' : 'New student?';
+    switchButton.textContent = showingRegister ? 'Login here' : 'Register here';
+    document.getElementById('login-msg').textContent = '';
+    document.getElementById('register-msg').textContent = '';
+});
 
-        try {
-            // Students শিট থেকে ডেটা আনা
-            const studentsData = await fetchData("Students");
-            
-            // আইডি ও পাসওয়ার্ড ম্যাচ করানো এবং স্ট্যাটাস চেক করা
-            const validStudent = studentsData.find(student => 
-                student.Student_ID == enteredId && 
-                student.Password == enteredPass
-            );
+loginForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    const button = document.getElementById('login-btn');
+    const message = document.getElementById('login-msg');
+    const enteredId = document.getElementById('login_id').value.trim();
+    const enteredPassword = document.getElementById('login_pass').value;
+    button.disabled = true;
+    button.textContent = 'Checking...';
+    message.textContent = '';
 
-            if (validStudent) {
-                if (validStudent.Status === "Active") {
-                    msg.style.color = "green";
-                    msg.innerText = "লগিন সফল! ড্যাশবোর্ডে নিয়ে যাওয়া হচ্ছে...";
-                    
-                    // ব্রাউজারে স্টুডেন্টের তথ্য সেভ করে রাখা (যাতে এক্সাম পেজে ব্যবহার করা যায়)
-                    sessionStorage.setItem("loggedInStudent", JSON.stringify(validStudent));
-                    
-                    // ২ সেকেন্ড পর ড্যাশবোর্ডে রিডাইরেক্ট
-                    setTimeout(() => {
-                        window.location.href = "dashboard.html";
-                    }, 1500);
-                } else {
-                    msg.style.color = "red";
-                    msg.innerText = "আপনার অ্যাকাউন্টটি ব্লক করা আছে। অ্যাডমিনের সাথে যোগাযোগ করুন।";
-                    btn.innerText = "লগিন করুন";
-                    btn.disabled = false;
-                }
-            } else {
-                msg.style.color = "red";
-                msg.innerText = "ভুল আইডি বা পাসওয়ার্ড!";
-                btn.innerText = "লগিন করুন";
-                btn.disabled = false;
-            }
-
-        } catch (error) {
-            msg.style.color = "red";
-            msg.innerText = "ইন্টারনেট কানেকশন বা API সমস্যা!";
-            btn.innerText = "লগিন করুন";
-            btn.disabled = false;
+    try {
+        const students = await fetchData('Students');
+        let student = students.find(item => String(item.Student_ID || '').trim() === enteredId && String(item.Password || '') === enteredPassword);
+        // Repair accounts registered while the Students sheet columns were written in the wrong order.
+        const legacyIndex = students.findIndex(item => String(item.Student_ID || '').trim() === enteredId && !item.Password && String(item.Email || '').trim().toLowerCase() === 'active' && String(item.Status || '') === enteredPassword);
+        if (!student && legacyIndex >= 0) {
+            const legacy = students[legacyIndex];
+            const repaired = { ...legacy, Password: enteredPassword, Status: 'Active', Email: '' };
+            const repairResponse = await saveData('Students', [repaired.Student_ID, repaired.Name, repaired.Phone, repaired.Password, repaired.Status, repaired.Email], 'update', legacyIndex + 2);
+            if (repairResponse.status === 'success') student = repaired;
         }
-    });
-}
+        if (!student) {
+            message.style.color = 'red';
+            message.textContent = 'Incorrect Student ID or password.';
+        } else if (String(student.Status || '').trim().toLowerCase() !== 'active') {
+            message.style.color = 'red';
+            message.textContent = 'অ্যাকাউন্টটি Deactive করা আছে। Active করার জন্য Institution-এ যোগাযোগ করো।';
+        } else {
+            message.style.color = 'green';
+            message.textContent = 'Login successful. Opening your dashboard...';
+            sessionStorage.setItem('loggedInStudent', JSON.stringify(student));
+            setTimeout(() => { window.location.href = 'dashboard.html'; }, 1000);
+        }
+    } catch (_) {
+        message.style.color = 'red';
+        message.textContent = 'Could not connect to the server. Please try again.';
+    } finally {
+        button.disabled = false;
+        button.textContent = 'Login Here';
+    }
+});
+
+registerForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    const button = document.getElementById('register-btn');
+    const message = document.getElementById('register-msg');
+    const name = document.getElementById('register-name').value.trim();
+    const mobileInput = document.getElementById('register-mobile').value.trim();
+    const password = document.getElementById('register-password').value;
+    const mobile = mobileInput.replace(/[\s()-]/g, '');
+    const digits = mobile.replace(/^\+/, '');
+
+    if (!/^\+?\d{10,15}$/.test(mobile) || digits.length < 10 || digits.length > 15) {
+        message.style.color = 'red';
+        message.textContent = 'Enter a valid mobile number (10 to 15 digits).';
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = 'Creating account...';
+    message.textContent = '';
+    try {
+        const students = await fetchData('Students');
+        const duplicate = students.some(student => String(student.Student_ID || '').trim().replace(/[\s()-]/g, '') === mobile);
+        if (duplicate) {
+            message.style.color = 'red';
+            message.textContent = 'This mobile number is already registered.';
+            return;
+        }
+
+        // Students sheet headers: Student_ID, Name, Phone, Password, Status, Email.
+        const response = await saveData('Students', [mobile, name, mobile, password, 'Active', ''], 'add');
+        if (response.status !== 'success') {
+            message.style.color = 'red';
+            message.textContent = 'Registration failed. Please try again.';
+            return;
+        }
+
+        registerForm.reset();
+        document.getElementById('login_id').value = mobile;
+        const newStudent = { Student_ID: mobile, Name: name, Phone: mobile, Email: '', Password: password, Status: 'Active' };
+        sessionStorage.setItem('loggedInStudent', JSON.stringify(newStudent));
+        message.style.color = 'green';
+        message.textContent = 'Registration successful! Opening your dashboard...';
+        setTimeout(() => { window.location.href = 'dashboard.html'; }, 1000);
+    } catch (_) {
+        message.style.color = 'red';
+        message.textContent = 'Could not connect to the server. Please try again.';
+    } finally {
+        button.disabled = false;
+        button.textContent = 'Create Account';
+    }
+});

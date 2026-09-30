@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="../js/admin-auth.js?v=20260930-3"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Global Settings - Admin Panel</title>
@@ -42,6 +43,7 @@
             <li><a href="index.html"><i class="fa-solid fa-border-all"></i> Dashboard</a></li>
             <li><a href="exams.html"><i class="fa-solid fa-book-open"></i> Exams</a></li>
             <li><a href="combined-subject.html"><i class="fa-solid fa-layer-group"></i> Combined Subject</a></li>
+            <li><a href="exam-schedule.html"><i class="fa-solid fa-calendar-days"></i> Exam Schedule</a></li>
             <li><a href="lms.html"><i class="fa-solid fa-chalkboard-user"></i> LMS</a></li>
             <li><a href="questions.html"><i class="fa-solid fa-clipboard-question"></i> Questions</a></li>
             <li><a href="students.html"><i class="fa-solid fa-user-group"></i> Students</a></li>
@@ -83,9 +85,22 @@
                 <p id="s-message" style="margin-top: 15px; font-weight: 500; text-align: center; font-size: 14px;"></p>
             </form>
         </div>
+        <div class="form-container">
+            <h2><i class="fa-solid fa-signature" style="color: var(--primary);"></i> Panel Branding</h2>
+            <form id="brand-settings-form">
+                <div class="form-group">
+                    <label for="brand-name">Sidebar Name</label>
+                    <input type="text" id="brand-name" maxlength="40" placeholder="e.g., Sariful Tech" required>
+                    <small style="color:var(--text-gray);font-size:11px;">This name will appear in the admin and student panel sidebars.</small>
+                </div>
+                <button type="submit" class="btn-submit" id="brand-save-btn">Save Panel Name</button>
+                <p id="brand-settings-message" style="margin-top:15px;font-weight:500;text-align:center;font-size:14px;"></p>
+            </form>
+        </div>
     </main>
 
-    <script src="../js/api.js"></script>
+    <script src="../js/api.js?v=20260930-4"></script>
     <script src="../js/admin-settings.js"></script>
+    <script src="../js/admin-brand-settings.js?v=20260930-4"></script>
 </body>
 </html>

@@ -38,8 +38,6 @@ async function loadResultsTable() {
         reversedResults.forEach((result, index) => {
             // আসল অ্যারে থেকে ডিলিট করার জন্য সঠিক ইনডেক্স বের করা
             const originalIndex = allResults.length - 1 - index;
-            const sheetRowIndex = originalIndex + 2; 
-
             // স্কোরের ওপর ভিত্তি করে ব্যাজ কালার
             const scoreValue = parseFloat(firstResultValue(result.Score, result.Total_Score)) || 0;
             const scoreClass = scoreValue > 0 ? "score-good" : "score-bad";
@@ -88,9 +86,7 @@ async function loadResultsTable() {
                 <td style="color: #6b7280;">${missed}</td>
                 <td><span class="score-badge ${scoreClass}">${scoreValue}</span></td>
                 <td style="font-size: 12px; color: #6b7280;">${result.Date || '-'}</td>
-                <td>
-                    <button onclick="deleteResult(${sheetRowIndex})" style="background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px;"><i class="fa-solid fa-trash"></i></button>
-                </td>
+                <td><button type="button" class="btn-view" onclick="viewResult(${originalIndex})"><i class="fa-solid fa-eye"></i> View</button></td>
             `;
             tbody.appendChild(tr);
         });
@@ -150,19 +146,41 @@ function deriveUniformMarkCounts(result, attempted, total) {
     return { right, wrong: attempted - right, missed: total - attempted };
 }
 
-// Result Delete Logic
-async function deleteResult(rowIndex) {
-    if (confirm("Are you sure you want to delete this exam record permanently?")) {
-        try {
-            const res = await saveData("Results", [], "delete", rowIndex);
-            if (res.status === "success") {
-                alert("Result record deleted successfully!");
-                loadResultsTable(); 
-            } else {
-                alert("Error deleting result!");
-            }
-        } catch (e) {
-            alert("Server connection error!");
-        }
-    }
+function viewResult(index) {
+    const result = allResults[index];
+    if (!result) return;
+    const escape = value => String(value ?? '—').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
+    const studentId = String(result.Student_ID || '').trim();
+    const examName = String(result.Exam_Name || result.Subject || result.Exam_Title || '').trim();
+    let review = [];
+    try {
+        const key = `exam-review:${studentId.toLocaleLowerCase()}|${examName.toLocaleLowerCase()}`;
+        const saved = JSON.parse(localStorage.getItem(key) || '[]');
+        if (Array.isArray(saved)) review = saved;
+    } catch (_) { /* Detailed reviews may not be available on this device. */ }
+
+    const total = firstResultValue(result.Total_Questions, result.Total_Question, result.Total_Qs, '—');
+    const right = firstResultValue(result.Right_Answers, result.Correct, result.Right, review.filter(item => item.status === 'correct').length || '—');
+    const wrong = firstResultValue(result.Wrong_Answers, result.Wrong_Answer, result.Wrong, review.filter(item => item.status === 'wrong').length || '—');
+    const missed = firstResultValue(result.Missed_Answers, result.Missed_Answer, result.Missed, review.filter(item => item.status === 'missing').length || '—');
+    const score = firstResultValue(result.Score, result.Total_Score, '—');
+    const reviewHtml = review.length ? `<h3 style="margin:20px 0 10px;color:var(--text-dark);">Answer Review</h3>${review.map((item, i) => {
+        const status = item.status === 'correct' ? 'Correct' : item.status === 'wrong' ? 'Incorrect' : 'Not answered';
+        const selected = item.selected ? `${item.selected}) ${item.options?.[item.selected] || ''}` : 'No answer';
+        const correct = item.correct ? `${item.correct}) ${item.options?.[item.correct] || ''}` : '—';
+        return `<article style="margin:8px 0;padding:13px;border:1px solid #e5e7eb;border-radius:10px;background:${item.status === 'correct' ? '#f0fdf4' : item.status === 'missing' ? '#fffbeb' : '#fff1f2'}"><strong>Question ${escape(item.number || i + 1)} · ${status}</strong><p style="margin:8px 0">${escape(item.question)}</p><small>Your answer: ${escape(selected)}<br>Correct answer: ${escape(correct)}</small></article>`;
+    }).join('')}` : '<p style="color:var(--text-gray);margin-top:18px">Detailed answer review is not available on this device.</p>';
+
+    document.getElementById('result-view-title').textContent = examName || 'Exam Result';
+    document.getElementById('result-view-content').innerHTML = `<p style="margin-bottom:16px;color:var(--text-gray)">${escape(studentNameById.get(studentId) || result.Student_Name || '—')} · ID ${escape(studentId)} · ${escape(result.Date || '—')}</p>
+        <div class="result-view-summary"><div><span>Total Questions</span><strong>${escape(total)}</strong></div><div><span>Correct</span><strong>${escape(right)}</strong></div><div><span>Wrong</span><strong>${escape(wrong)}</strong></div><div><span>Unanswered</span><strong>${escape(missed)}</strong></div><div><span>Total Number</span><strong>${escape(score)}</strong></div></div>${reviewHtml}`;
+    document.getElementById('result-view-modal').classList.add('open');
 }
+
+function closeResultView() {
+    document.getElementById('result-view-modal').classList.remove('open');
+}
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') closeResultView();
+});

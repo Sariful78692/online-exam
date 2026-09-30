@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="../js/admin-auth.js?v=20260930-3"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Combined Subject - Admin Panel</title>
@@ -26,8 +27,8 @@
         .form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
         .form-group { display:flex; flex-direction:column; gap:8px; }
         .form-group label { font-size:13px; font-weight:600; }
-        .form-group input { padding:11px 14px; border:1px solid var(--border-color); border-radius:8px; font-size:14px; }
-        .form-group input:focus { outline:1px solid var(--primary); border-color:var(--primary); }
+        .form-group input,.form-group select { width:100%; min-height:42px; padding:10px 14px; border:1px solid var(--border-color); border-radius:8px; background:#fff; color:var(--text-dark); font-size:14px; }
+        .form-group input:focus,.form-group select:focus { outline:1px solid var(--primary); border-color:var(--primary); }
         .subject-picker { margin-top:20px; }
         .subject-picker h2,.table-panel h2 { margin:0 0 12px; font-size:16px; }
         #subject-options { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:10px; }
@@ -53,6 +54,7 @@
                 <li><a href="index.html"><i class="fa-solid fa-border-all"></i> Dashboard</a></li>
                 <li><a href="exams.html"><i class="fa-solid fa-book-open"></i> Exams</a></li>
                 <li><a href="combined-subject.html" class="active"><i class="fa-solid fa-layer-group"></i> Combined Subject</a></li>
+                <li><a href="exam-schedule.html"><i class="fa-solid fa-calendar-days"></i> Exam Schedule</a></li>
                 <li><a href="lms.html"><i class="fa-solid fa-chalkboard-user"></i> LMS</a></li>
                 <li><a href="questions.html"><i class="fa-solid fa-clipboard-question"></i> Questions</a></li>
                 <li><a href="students.html"><i class="fa-solid fa-user-group"></i> Students</a></li>
@@ -72,10 +74,10 @@
         <main class="main-content">
             <section class="panel">
                 <h1><i class="fa-solid fa-layer-group" style="color:var(--primary);"></i> Configure Combined Subject Exam</h1>
-                <p class="description">Subjects below are grouped by their exam name from Configure New Exam. Choose any two or more and enter a Combined Exam Name. On save, only the checked subjects move from the student's My Subjects list to Combined Subject Exam; unchecked subjects stay in My Subjects. Each selected subject keeps the shown duration, and the combined duration is their sum. If you use a new exam name, add its questions with that same name.</p>
+                <p class="description">Choose an existing exam name, then select at least two of its subjects to combine. On save, the selected subjects move from the student's My Subjects list to Combined Subject Exam; unchecked subjects stay in My Subjects.</p>
                 <form id="combined-subject-form">
                     <div class="form-grid">
-                        <div class="form-group"><label for="combined-exam-name">Combined Exam Name</label><input id="combined-exam-name" type="text" placeholder="e.g., NEET Mock Test 1" required></div>
+                        <div class="form-group"><label for="combined-exam-name">Exam Name</label><select id="combined-exam-name" required><option value="">Select an exam name</option></select></div>
                     </div>
                     <div class="subject-picker">
                         <h2>Select subjects</h2>
@@ -97,7 +99,7 @@
             </section>
         </main>
     </div>
-    <script src="../js/api.js"></script>
-    <script src="../js/admin-combined-subject.js?v=20260930-2"></script>
+    <script src="../js/api.js?v=20260930-4"></script>
+    <script src="../js/admin-combined-subject.js?v=20260930-3"></script>
 </body>
 </html>

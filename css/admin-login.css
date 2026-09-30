@@ -1,0 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root{font-family:Inter,system-ui,sans-serif;color:#1f2937;background:#0f1024;font-synthesis:none;text-rendering:optimizeLegibility}
+*{box-sizing:border-box}
+body{min-width:320px;min-height:100vh;margin:0;display:grid;place-items:center;overflow:hidden;background:radial-gradient(ellipse at 15% 15%,#342065 0,transparent 42%),radial-gradient(ellipse at 90% 85%,#142e58 0,transparent 38%),linear-gradient(135deg,#101126,#17172f 55%,#101827);padding:24px}
+.ambient{position:fixed;width:360px;height:360px;border-radius:50%;filter:blur(2px);opacity:.25;pointer-events:none;animation:float 9s ease-in-out infinite alternate}
+.ambient.one{top:-130px;right:8%;background:linear-gradient(135deg,#a78bfa,#7c3aed)}
+.ambient.two{bottom:-190px;left:8%;width:440px;height:440px;background:linear-gradient(135deg,#38bdf8,#2563eb);animation-delay:-4s}
+.login-card{position:relative;width:min(100%,430px);padding:38px;border:1px solid rgba(255,255,255,.16);border-radius:24px;background:rgba(255,255,255,.96);box-shadow:0 28px 90px rgba(0,0,0,.38);animation:cardIn .65s cubic-bezier(.2,.8,.2,1) both}
+.brand{display:flex;align-items:center;gap:14px;margin-bottom:30px}
+.brand-icon{display:grid;width:54px;height:54px;place-items:center;border-radius:16px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:white;font-size:23px;box-shadow:0 9px 22px rgba(109,40,217,.28)}
+.brand-copy small{display:block;margin-bottom:4px;color:#7c3aed;font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase}
+.brand-copy strong{font-size:17px;color:#1f2937}
+h1{margin:0 0 8px;font-size:26px;letter-spacing:-.7px}
+.subtitle{margin:0 0 28px;color:#6b7280;font-size:14px;line-height:1.6}
+.field{margin:18px 0}
+.field label{display:block;margin-bottom:8px;color:#374151;font-size:13px;font-weight:700}
+.input-wrap{position:relative}
+.input-wrap i.leading{position:absolute;top:50%;left:14px;transform:translateY(-50%);color:#9ca3af}
+.input-wrap input{width:100%;height:49px;padding:0 44px 0 42px;border:1px solid #d1d5db;border-radius:11px;background:#fff;color:#111827;font:500 14px Inter,sans-serif;outline:none;transition:border-color .2s,box-shadow .2s,transform .2s}
+.input-wrap input:focus{border-color:#8b5cf6;box-shadow:0 0 0 4px rgba(139,92,246,.13);transform:translateY(-1px)}
+.toggle-password{position:absolute;top:50%;right:12px;transform:translateY(-50%);border:0;background:transparent;color:#6b7280;cursor:pointer;padding:6px}
+.submit{display:flex;width:100%;height:50px;align-items:center;justify-content:center;gap:10px;margin-top:24px;border:0;border-radius:11px;background:linear-gradient(100deg,#7c3aed,#6d28d9 55%,#4f46e5);box-shadow:0 9px 22px rgba(109,40,217,.24);color:white;font:700 14px Inter,sans-serif;cursor:pointer;transition:transform .2s,box-shadow .2s,opacity .2s}
+.submit:hover{transform:translateY(-2px);box-shadow:0 13px 26px rgba(109,40,217,.32)}.submit:active{transform:translateY(0)}.submit:disabled{opacity:.7;cursor:wait}
+.message{min-height:21px;margin:14px 0 0;text-align:center;font-size:13px;font-weight:600}
+.shake{animation:shake .32s ease-in-out}
+.secure-note{display:flex;justify-content:center;gap:7px;margin-top:22px;color:#9ca3af;font-size:11px}.secure-note i{color:#10b981}
+@keyframes cardIn{from{opacity:0;transform:translateY(20px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes float{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(18px,24px,0) scale(1.08)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+@media(max-width:480px){.login-card{padding:28px 22px;border-radius:20px}h1{font-size:23px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}

@@ -9,10 +9,76 @@ function isQuestionExamConfig(exam) {
 }
 
 window.onload = async () => {
+    document.getElementById('question-type').addEventListener('change', updateQuestionTypeHelp);
+    document.getElementById('question').addEventListener('input', updateMathPreview);
+    document.querySelectorAll('.math-tool').forEach(button => button.addEventListener('click', insertMathTemplate));
     await loadQuestionExams();
     await loadQuestions();
     await restoreQuestionFormDefaults();
 };
+
+function updateQuestionTypeHelp() {
+    const isMath = document.getElementById('question-type').value === 'math';
+    document.getElementById('math-tools').classList.toggle('visible', isMath);
+    document.getElementById('math-preview').style.display = isMath ? 'block' : 'none';
+    document.getElementById('question').placeholder = isMath
+        ? 'Enter LaTeX, e.g. \\frac{a}{b} or x^2 + y^2 = z^2'
+        : 'Write your question here...';
+    document.getElementById('question-type-help').textContent = isMath
+        ? 'Use the symbol buttons and type in the marked braces. For √a + 10 = 26: click √□, type a, press →, then type + 10 = 26.'
+        : 'Use normal text for the question.';
+    if (isMath) updateMathPreview();
+}
+
+function insertMathTemplate(event) {
+    const input = document.getElementById('question');
+    const template = event.currentTarget.dataset.template || '';
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+    input.setRangeText(template, start, end, 'end');
+    const cursorOffset = event.currentTarget.dataset.cursor;
+    if (cursorOffset !== undefined) {
+        const cursor = start + Number(cursorOffset);
+        input.setSelectionRange(cursor, cursor);
+    }
+    input.focus();
+    updateMathPreview();
+}
+
+let mathPreviewQueue = Promise.resolve();
+function updateMathPreview() {
+    if (document.getElementById('question-type').value !== 'math') return;
+    const expression = document.getElementById('question').value.trim();
+    const preview = document.getElementById('math-preview');
+    if (!expression) {
+        preview.textContent = '';
+        return;
+    }
+    if (!window.MathJax?.typesetPromise) {
+        preview.textContent = `\\(${expression}\\)`;
+        return;
+    }
+    mathPreviewQueue = mathPreviewQueue.then(() => {
+        window.MathJax.typesetClear?.([preview]);
+        preview.textContent = `\\(${expression}\\)`;
+        return window.MathJax.typesetPromise([preview]);
+    }).catch(() => {});
+}
+
+function getQuestionForStorage(value) {
+    const text = String(value || '').trim();
+    if (document.getElementById('question-type').value !== 'math') return text;
+    if ((text.startsWith('\\(') && text.endsWith('\\)')) || (text.startsWith('\\[') && text.endsWith('\\]'))) return text;
+    return `\\(${text}\\)`;
+}
+
+function getEditableQuestion(value) {
+    const text = String(value || '');
+    if ((text.startsWith('\\(') && text.endsWith('\\)')) || (text.startsWith('\\[') && text.endsWith('\\]'))) {
+        return { type: 'math', text: text.slice(2, -2).trim() };
+    }
+    return { type: 'text', text };
+}
 
 async function restoreQuestionFormDefaults() {
     let saved;
@@ -118,7 +184,7 @@ document.getElementById('question-form').addEventListener('submit', async event 
     const data = [
         document.getElementById('exam_name').value,
         document.getElementById('subject').value,
-        document.getElementById('question').value,
+        getQuestionForStorage(document.getElementById('question').value),
         document.getElementById('opt_a').value,
         document.getElementById('opt_b').value,
         document.getElementById('opt_c').value,
@@ -179,7 +245,10 @@ async function editQuestion(index) {
         subjectSelect.add(new Option(subjectName, subjectName));
     }
     subjectSelect.value = subjectName;
-    document.getElementById('question').value = q.Question || '';
+    const editableQuestion = getEditableQuestion(q.Question);
+    document.getElementById('question').value = editableQuestion.text;
+    document.getElementById('question-type').value = editableQuestion.type;
+    updateQuestionTypeHelp();
     document.getElementById('opt_a').value = q.Option_A || '';
     document.getElementById('opt_b').value = q.Option_B || '';
     document.getElementById('opt_c').value = q.Option_C || '';
@@ -212,6 +281,8 @@ function resetForm() {
         negativeMark: document.getElementById('negative_mark').value
     };
     document.getElementById('question-form').reset();
+    document.getElementById('question-type').value = 'text';
+    updateQuestionTypeHelp();
     document.getElementById('exam_name').value = defaults.exam;
     document.getElementById('mark').value = defaults.mark || '1';
     document.getElementById('negative_mark').value = defaults.negativeMark || '0.25';

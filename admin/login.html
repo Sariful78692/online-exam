@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#15152b">
+    <title>Admin Login - Sariful Tech</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/admin-login.css">
+</head>
+<body>
+    <div class="ambient one"></div><div class="ambient two"></div>
+    <main class="login-card">
+        <div class="brand">
+            <div class="brand-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+            <div class="brand-copy"><small>Online Exam</small><strong>Sariful Tech</strong></div>
+        </div>
+        <h1>Admin sign in</h1>
+        <p class="subtitle">Sign in to manage exams, students, questions, and results.</p>
+        <form id="admin-login-form">
+            <div class="field">
+                <label for="admin-id">Admin ID</label>
+                <div class="input-wrap"><i class="fa-solid fa-user leading"></i><input id="admin-id" name="adminId" type="text" placeholder="Enter admin ID" autocomplete="username" required></div>
+            </div>
+            <div class="field">
+                <label for="admin-password">Password</label>
+                <div class="input-wrap"><i class="fa-solid fa-lock leading"></i><input id="admin-password" name="password" type="password" placeholder="Enter password" autocomplete="current-password" required><button type="button" class="toggle-password" id="toggle-password" aria-label="Show password"><i class="fa-regular fa-eye"></i></button></div>
+            </div>
+            <button class="submit" type="submit" id="admin-login-button"><span>Sign in to dashboard</span><i class="fa-solid fa-arrow-right"></i></button>
+            <p class="message" id="admin-login-message" role="status" aria-live="polite"></p>
+        </form>
+        <div class="secure-note"><i class="fa-solid fa-shield-halved"></i><span>Administrator access</span></div>
+    </main>
+    <script src="../js/admin-login.js"></script>
+</body>
+</html>

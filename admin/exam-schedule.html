@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="../js/admin-auth.js?v=20260930-3"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Schedule - Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        :root{--primary:#8b5cf6;--light:#ede9fe;--bg:#f3f4f6;--text:#1f2937;--gray:#6b7280;--border:#e5e7eb}
+        *{box-sizing:border-box;font-family:Inter,sans-serif}body{margin:0;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+        .sidebar{width:260px;flex:0 0 260px;background:#fff;border-right:1px solid var(--border);padding:20px 15px}.logo{padding:10px;margin-bottom:20px;color:var(--primary);font-weight:700}.logo i{padding:8px;background:var(--primary);color:white;border-radius:8px;margin-right:8px}.category{margin:20px 0 10px 10px;color:#9ca3af;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase}.menu{list-style:none;margin:0;padding:0}.menu a{display:flex;gap:12px;padding:10px 12px;margin-bottom:4px;border-radius:8px;color:var(--gray);text-decoration:none;font-size:14px}.menu a:hover,.menu a.active{background:var(--light);color:var(--primary)}.menu i{width:20px;text-align:center}
+        main{flex:1;padding:30px;min-width:0}.card{background:#fff;padding:24px;border:1px solid var(--border);border-radius:16px;margin-bottom:20px}.card h1,.card h2{margin:0 0 18px;font-size:19px}.schedule-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;align-items:end}.schedule-form label{display:grid;gap:7px;color:var(--gray);font-size:13px;font-weight:600}.schedule-form select,.schedule-form input{padding:11px;border:1px solid var(--border);border-radius:8px;background:#fff;font-size:14px}.schedule-form button{border:0;border-radius:8px;background:var(--primary);color:#fff;padding:12px 16px;font-weight:600;cursor:pointer}.message{grid-column:1/-1;min-height:18px;font-size:13px}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;text-align:left}th,td{padding:12px 10px;border-bottom:1px solid var(--border);font-size:13px}th{color:var(--gray);white-space:nowrap}.remove{border:0;border-radius:6px;background:#fee2e2;color:#dc2626;padding:7px 10px;cursor:pointer}.empty{color:var(--gray);text-align:center}
+        .sidebar-profile{display:flex;align-items:center;gap:10px;margin-top:25px;padding:15px 10px 5px;border-top:1px solid var(--border)}
+        .sidebar-avatar{display:grid;width:35px;height:35px;flex:0 0 35px;place-items:center;border-radius:50%;background:var(--primary);color:#fff;font-size:13px;font-weight:700}.sidebar-profile h4{margin:0 0 3px;font-size:14px}.sidebar-profile p{margin:0;color:var(--gray);font-size:12px}
+        @media(max-width:760px){body{display:block}.sidebar{width:100%;padding:14px}.sidebar .category,.sidebar .menu{display:block}.sidebar .menu{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr))}.sidebar-profile{margin-top:12px}main{padding:16px}}
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="logo"><i class="fa-solid fa-graduation-cap"></i>Sariful Tech</div>
+        <div class="category">Main</div><ul class="menu">
+            <li><a href="index.html"><i class="fa-solid fa-border-all"></i>Dashboard</a></li>
+            <li><a href="exams.html"><i class="fa-solid fa-book-open"></i>Exams</a></li>
+            <li><a href="combined-subject.html"><i class="fa-solid fa-layer-group"></i>Combined Subject</a></li>
+            <li><a href="exam-schedule.html" class="active"><i class="fa-solid fa-calendar-days"></i>Exam Schedule</a></li>
+            <li><a href="lms.html"><i class="fa-solid fa-chalkboard-user"></i>LMS</a></li>
+            <li><a href="questions.html"><i class="fa-solid fa-clipboard-question"></i>Questions</a></li>
+            <li><a href="students.html"><i class="fa-solid fa-user-group"></i>Students</a></li>
+        </ul>
+        <div class="category">Management</div><ul class="menu">
+            <li><a href="results.html"><i class="fa-solid fa-database"></i>Results Database</a></li>
+            <li><a href="#"><i class="fa-solid fa-chart-line"></i>Statistics</a></li>
+            <li><a href="#"><i class="fa-solid fa-certificate"></i>Certificates</a></li>
+        </ul>
+        <div class="category">System</div><ul class="menu">
+            <li><a href="settings.html"><i class="fa-solid fa-gear"></i>Settings</a></li>
+            <li><a href="#"><i class="fa-solid fa-circle-info"></i>Help</a></li>
+        </ul>
+        <div class="sidebar-profile">
+            <div class="sidebar-avatar" aria-label="Sariful Sk">SS</div>
+            <div><h4>Sariful Sk</h4><p>sarifulislam55@gmail.com</p></div>
+        </div>
+    </aside>
+    <main>
+        <section class="card">
+            <h1><i class="fa-solid fa-calendar-days" style="color:var(--primary)"></i> Schedule an Exam</h1>
+            <form id="schedule-form" class="schedule-form">
+                <label>Exam Name<select id="schedule-exam" required><option value="">Loading exams...</option></select></label>
+                <label>Start Date &amp; Time<input id="schedule-start" type="datetime-local" required></label>
+                <button type="submit" id="schedule-save"><i class="fa-solid fa-floppy-disk"></i> Save Schedule</button>
+                <div id="schedule-message" class="message" role="status"></div>
+            </form>
+        </section>
+        <section class="card">
+            <h2>Scheduled Exams</h2>
+            <div class="table-wrap"><table><thead><tr><th>Exam Name</th><th>Starts At</th><th>Action</th></tr></thead><tbody id="schedule-list"><tr><td colspan="3" class="empty">Loading schedules...</td></tr></tbody></table></div>
+        </section>
+    </main>
+    <script src="../js/api.js?v=20260930-4"></script>
+    <script src="../js/admin-exam-schedule.js?v=20260930-1"></script>
+</body>
+</html>

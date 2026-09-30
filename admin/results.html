@@ -1,6 +1,7 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="../js/admin-auth.js?v=20260930-3"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Results Database - Admin Panel</title>
@@ -27,8 +28,18 @@
         .score-badge { padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 13px; }
         .score-good { background: #d1fae5; color: #10b981; }
         .score-bad { background: #fee2e2; color: #ef4444; }
-        .btn-delete { background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
-        .btn-delete:hover { background: #dc2626; }
+        .btn-view { background: var(--primary); color: white; border: none; padding: 7px 11px; border-radius: 6px; cursor: pointer; font-size: 12px; white-space:nowrap; }
+        .btn-view:hover { background: #7c3aed; }
+        .result-view-modal { position:fixed; inset:0; z-index:1000; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(17,24,39,.55); }
+        .result-view-modal.open { display:flex; }
+        .result-view-dialog { width:min(760px,100%); max-height:90vh; overflow:auto; padding:24px; border-radius:16px; background:#fff; box-shadow:0 20px 60px rgba(0,0,0,.25); }
+        .result-view-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; }
+        .result-view-header h2 { margin:0; color:var(--text-dark); font-size:20px; }
+        .result-view-close { border:0; background:#f3f4f6; border-radius:8px; padding:8px 11px; cursor:pointer; }
+        .result-view-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-bottom:20px; }
+        .result-view-summary div { padding:13px; border:1px solid var(--border-color); border-radius:10px; background:#fafafa; }
+        .result-view-summary span { display:block; color:var(--text-gray); font-size:12px; }
+        .result-view-summary strong { display:block; margin-top:5px; color:var(--text-dark); font-size:18px; }
         .results-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; }
         .print-results-btn { border:0; border-radius:8px; padding:10px 14px; background:var(--primary); color:#fff; font-weight:600; cursor:pointer; }
         @media print {
@@ -47,6 +58,7 @@
             <li><a href="index.html"><i class="fa-solid fa-border-all"></i> Dashboard</a></li>
             <li><a href="exams.html"><i class="fa-solid fa-book-open"></i> Exams</a></li>
             <li><a href="combined-subject.html"><i class="fa-solid fa-layer-group"></i> Combined Subject</a></li>
+            <li><a href="exam-schedule.html"><i class="fa-solid fa-calendar-days"></i> Exam Schedule</a></li>
             <li><a href="lms.html"><i class="fa-solid fa-chalkboard-user"></i> LMS</a></li>
             <li><a href="questions.html"><i class="fa-solid fa-clipboard-question"></i> Questions</a></li>
             <li><a href="students.html"><i class="fa-solid fa-user-group"></i> Students</a></li>
@@ -92,8 +104,15 @@
         </div>
     </main>
 
-    <script src="../js/api.js"></script>
-    <script src="../js/admin-results.js?v=20260930-8"></script>
+    <div class="result-view-modal" id="result-view-modal" role="dialog" aria-modal="true" aria-labelledby="result-view-title" onclick="if(event.target===this) closeResultView()">
+        <section class="result-view-dialog">
+            <div class="result-view-header"><h2 id="result-view-title">Exam Result</h2><button type="button" class="result-view-close" onclick="closeResultView()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
+            <div id="result-view-content"></div>
+        </section>
+    </div>
+
+    <script src="../js/api.js?v=20260930-4"></script>
+    <script src="../js/admin-results.js?v=20260930-9"></script>
 </body>
 </html>
 

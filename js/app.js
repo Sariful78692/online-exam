@@ -16,11 +16,21 @@ let activeExamSubject = null;
 let completedExamKeys = new Set();
 let currentAttemptName = "";
 let studentResults = [];
+let examConfigurations = [];
+let examSchedules = new Map();
+let scheduleTicker = null;
 
 function normalizeSubjectName(value) {
     const subject = String(value || "").trim().toLocaleLowerCase();
     // Older question rows use "Physic" while combined exams may use "Physics".
     return subject === "physic" ? "physics" : subject;
+}
+
+function normalizeApiRows(value) {
+    if (Array.isArray(value)) return value;
+    if (Array.isArray(value?.value)) return value.value;
+    if (Array.isArray(value?.data)) return value.data;
+    return [];
 }
 
 function getSubjectDuration(subject) {
@@ -74,6 +84,21 @@ function getUnavailableSubjectKeys() {
     return unavailable;
 }
 
+function updateOverviewDuration() {
+    const combinedDuration = Number(availableMockExams[0]?.duration);
+    const activeDuration = Number(examConfigurations.find(exam => normalizeSubjectName(exam.Status) === 'active' && Number(exam.Duration) > 0)?.Duration);
+    const duration = Number.isFinite(combinedDuration) && combinedDuration > 0 ? combinedDuration : activeDuration;
+    const value = document.getElementById('exam-duration');
+    const unit = document.getElementById('exam-duration-unit');
+    if (!Number.isFinite(duration) || duration <= 0) {
+        value.innerText = '—';
+        unit.innerText = 'no exam';
+    } else {
+        value.innerText = duration;
+        unit.innerText = 'min';
+    }
+}
+
 function updateAvailableQuestionCount() {
     const unavailable = getUnavailableSubjectKeys();
     const availableCount = allData.filter(question => !unavailable.has(normalizeSubjectName(question.Subject))).length;
@@ -81,7 +106,7 @@ function updateAvailableQuestionCount() {
     if (countElement) countElement.innerText = availableCount;
 }
 
-window.onload = async () => {
+window.addEventListener('load', async () => {
     const studentDataStr = sessionStorage.getItem("loggedInStudent");
     if (!studentDataStr) {
         window.location.href = "index.html"; 
@@ -101,29 +126,43 @@ window.onload = async () => {
             fetchData("Exams"),
             fetchData("Results")
         ]);
+        const questionRows = normalizeApiRows(questionsData);
+        const settingsRows = normalizeApiRows(settingsData);
+        const subjectRows = normalizeApiRows(subjectsData);
+        const examRows = normalizeApiRows(examsData);
+        const resultRows = normalizeApiRows(resultsData);
+        const panelBrand = [...settingsRows].reverse().find(setting => setting.Setting_Name === 'Brand_Name')?.Setting_Value || localStorage.getItem('Brand_Name');
+        if (panelBrand) {
+            const brandElement = document.getElementById('panel-brand-name');
+            if (brandElement) brandElement.textContent = panelBrand;
+        }
+        examConfigurations = examRows;
+        examSchedules = new Map(settingsRows
+            .filter(setting => String(setting.Setting_Name || '').startsWith('Exam_Schedule:'))
+            .map(setting => [String(setting.Setting_Name).slice('Exam_Schedule:'.length).trim().toLocaleLowerCase(), String(setting.Setting_Value || '')]));
 
-        if (settingsData && settingsData.length > 0) {
-            const timeSettings = settingsData.filter(s => s.Setting_Name === "Total_Time");
+        if (settingsRows.length > 0) {
+            const timeSettings = settingsRows.filter(s => s.Setting_Name === "Total_Time");
             if (timeSettings.length > 0) {
                 TOTAL_EXAM_MINUTES = parseFloat(timeSettings[timeSettings.length - 1].Setting_Value);
             }
 
-            const fontSettings = settingsData.filter(s => s.Setting_Name === "Font_Size");
+            const fontSettings = settingsRows.filter(s => s.Setting_Name === "Font_Size");
             if (fontSettings.length > 0) {
                 GLOBAL_FONT_SIZE = fontSettings[fontSettings.length - 1].Setting_Value;
             }
         }
 
-        allData = questionsData || [];
-        completedExamKeys = new Set((resultsData || [])
+        allData = questionRows;
+        completedExamKeys = new Set(resultRows
             .filter(result => String(result.Student_ID || "") === String(loggedInStudent.Student_ID || ""))
             .map(result => createAttemptKey(getResultExamName(result))));
-        studentResults = (resultsData || []).filter(result => String(result.Student_ID || "") === String(loggedInStudent.Student_ID || ""));
+        studentResults = resultRows.filter(result => String(result.Student_ID || "") === String(loggedInStudent.Student_ID || ""));
         const localAttemptPrefix = `exam-completed:${String(loggedInStudent.Student_ID || "").trim().toLocaleLowerCase()}|`;
         Object.keys(localStorage).forEach(storageKey => {
             if (storageKey.startsWith(localAttemptPrefix)) completedExamKeys.add(storageKey.slice("exam-completed:".length));
         });
-        availableSubjects = [...new Map((subjectsData || [])
+        availableSubjects = [...new Map(subjectRows
             .map(s => s.Subject_Name || s.Subject)
             .filter(Boolean)
             .map(subject => [normalizeSubjectName(subject), String(subject).trim()])).values()];
@@ -133,28 +172,28 @@ window.onload = async () => {
                 .filter(Boolean)
                 .map(subject => [normalizeSubjectName(subject), String(subject).trim()])).values()];
         }
-        availableMockExams = getCombinedExams(examsData || []);
+        availableMockExams = getCombinedExams(examRows);
         subjectDurations = new Map();
-        (examsData || []).forEach(exam => {
+        examRows.forEach(exam => {
             const status = normalizeSubjectName(exam.Status);
             const duration = Number(exam.Duration);
             if (!exam.Subject || duration <= 0 || status === "combined" || (status && status !== "active")) return;
             subjectDurations.set(normalizeSubjectName(exam.Subject), duration);
         });
         const combinedSubjectKeys = new Set(availableMockExams.flatMap(exam => exam.subjects.map(normalizeSubjectName)));
-        document.getElementById("subject-count").innerText = availableSubjects.filter(subject => !combinedSubjectKeys.has(normalizeSubjectName(subject))).length;
+        document.getElementById("subject-count").innerText = availableSubjects.length;
+        document.getElementById("combined-subject-count").innerText = availableSubjects.filter(subject => combinedSubjectKeys.has(normalizeSubjectName(subject))).length;
         updateAvailableQuestionCount();
-        document.getElementById("exam-duration").innerText = "Varies";
-        document.getElementById("exam-duration-unit").innerText = "by subject";
+        updateOverviewDuration();
 
         document.getElementById("dashboard-menu").addEventListener("click", event => {
             event.preventDefault();
             clearInterval(timerInterval);
+            clearScheduleTicker();
             document.getElementById("quiz-container").style.display = "none";
             document.getElementById("result-container").style.display = "none";
             document.getElementById("subject-selection").style.display = "block";
-            document.getElementById("exam-duration").innerText = "Varies";
-            document.getElementById("exam-duration-unit").innerText = "by subject";
+            updateOverviewDuration();
             document.querySelectorAll(".sidebar-menu a").forEach(link => link.classList.remove("active"));
             document.getElementById("dashboard-menu").classList.add("active");
             showCombinedExamSetup();
@@ -162,11 +201,11 @@ window.onload = async () => {
         document.getElementById("combined-exam-menu").addEventListener("click", event => {
             event.preventDefault();
             clearInterval(timerInterval);
+            clearScheduleTicker();
             document.getElementById("quiz-container").style.display = "none";
             document.getElementById("result-container").style.display = "none";
             document.getElementById("subject-selection").style.display = "block";
-            document.getElementById("exam-duration").innerText = "Varies";
-            document.getElementById("exam-duration-unit").innerText = "by subject";
+            updateOverviewDuration();
             document.querySelectorAll(".sidebar-menu a").forEach(link => link.classList.remove("active"));
             event.currentTarget.classList.add("active");
             showCombinedExamSetup();
@@ -174,12 +213,24 @@ window.onload = async () => {
         document.getElementById("result-view-menu").addEventListener("click", event => {
             event.preventDefault();
             clearInterval(timerInterval);
+            clearScheduleTicker();
             document.getElementById("quiz-container").style.display = "none";
             document.getElementById("result-container").style.display = "none";
             document.getElementById("subject-selection").style.display = "block";
             document.querySelectorAll(".sidebar-menu a").forEach(link => link.classList.remove("active"));
             event.currentTarget.classList.add("active");
             showStudentResultView();
+        });
+        document.getElementById("profile-menu").addEventListener("click", event => {
+            event.preventDefault();
+            clearInterval(timerInterval);
+            clearScheduleTicker();
+            document.getElementById("quiz-container").style.display = "none";
+            document.getElementById("result-container").style.display = "none";
+            document.getElementById("subject-selection").style.display = "block";
+            document.querySelectorAll(".sidebar-menu a").forEach(link => link.classList.remove("active"));
+            event.currentTarget.classList.add("active");
+            showStudentProfile();
         });
         
         if (allData && allData.length > 0) {
@@ -191,9 +242,78 @@ window.onload = async () => {
             document.getElementById('subject-sidebar-list').innerHTML = "<li><a href='#'>কোনো বিষয় নেই</a></li>";
         }
     } catch (error) {
-        document.getElementById('subject-selection').innerHTML = "<p>ডেটা লোড করতে সমস্যা হয়েছে!</p>";
+        console.error('Student dashboard data initialization failed:', error);
+        document.getElementById('subject-selection').innerHTML = '<h2>Could not load dashboard data</h2><p>Please refresh the page. If the problem continues, contact your institution.</p>';
+        document.getElementById('subject-sidebar-list').innerHTML = '<li><a href="#">Could not load subjects</a></li>';
     }
-};
+});
+
+function showStudentProfile() {
+    const selection = document.getElementById('subject-selection');
+    selection.innerHTML = `<h2>Student Profile</h2>
+        <p style="margin:-8px 0 20px;color:var(--text-gray)">Update your account password below.</p>
+        <div class="profile-password-form">
+            <label>Student ID<input type="text" value="${escapeReviewHtml(loggedInStudent.Student_ID || '')}" readonly></label>
+            <label>Full Name<input type="text" value="${escapeReviewHtml(loggedInStudent.Name || '')}" readonly></label>
+            <form id="change-password-form" class="profile-password-form">
+                <label>Current Password<input name="currentPassword" type="password" autocomplete="current-password" required></label>
+                <label>New Password<input name="newPassword" type="password" minlength="4" autocomplete="new-password" required></label>
+                <label>Confirm New Password<input name="confirmPassword" type="password" minlength="4" autocomplete="new-password" required></label>
+                <button type="submit" class="btn-submit">Change Password</button>
+                <div id="profile-password-message" role="status"></div>
+            </form>
+        </div>`;
+    document.getElementById('change-password-form').addEventListener('submit', changeStudentPassword);
+}
+
+async function changeStudentPassword(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = Object.fromEntries(new FormData(form).entries());
+    const message = document.getElementById('profile-password-message');
+    const button = form.querySelector('[type="submit"]');
+    if (data.currentPassword !== String(loggedInStudent.Password || '')) {
+        message.style.color = '#dc2626';
+        message.textContent = 'Current password is incorrect.';
+        return;
+    }
+    if (data.newPassword !== data.confirmPassword) {
+        message.style.color = '#dc2626';
+        message.textContent = 'New password and confirmation do not match.';
+        return;
+    }
+    if (data.newPassword === data.currentPassword) {
+        message.style.color = '#dc2626';
+        message.textContent = 'Choose a different password.';
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = 'Saving...';
+    message.textContent = '';
+    try {
+        const students = await fetchData('Students');
+        const studentIndex = students.findIndex(student => String(student.Student_ID || '').trim() === String(loggedInStudent.Student_ID || '').trim());
+        if (studentIndex < 0) throw new Error('Student account not found');
+        const currentRecord = students[studentIndex];
+        const updatedStudent = { ...currentRecord, Password: data.newPassword };
+        // Students sheet headers: Student_ID, Name, Phone, Password, Status, Email.
+        const rowData = [updatedStudent.Student_ID, updatedStudent.Name, updatedStudent.Phone, updatedStudent.Password, updatedStudent.Status || 'Active', updatedStudent.Email || ''];
+        const response = await saveData('Students', rowData, 'update', studentIndex + 2);
+        if (response.status !== 'success') throw new Error('Password update failed');
+        loggedInStudent = updatedStudent;
+        sessionStorage.setItem('loggedInStudent', JSON.stringify(updatedStudent));
+        form.reset();
+        message.style.color = '#047857';
+        message.textContent = 'Password changed successfully.';
+    } catch (_) {
+        message.style.color = '#dc2626';
+        message.textContent = 'Could not update password. Please try again.';
+    } finally {
+        button.disabled = false;
+        button.textContent = 'Change Password';
+    }
+}
 
 function logout() {
     sessionStorage.removeItem("loggedInStudent");
@@ -255,7 +375,66 @@ function getCombinedExams(exams) {
         }));
 }
 
+function getExamScheduleStart(examName) {
+    const value = examSchedules.get(String(examName || '').trim().toLocaleLowerCase());
+    if (!value) return null;
+    const timestamp = new Date(value).getTime();
+    return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function formatScheduleCountdown(milliseconds) {
+    const totalSeconds = Math.max(0, Math.ceil(milliseconds / 1000));
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${days}d ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function clearScheduleTicker() {
+    if (scheduleTicker) clearInterval(scheduleTicker);
+    scheduleTicker = null;
+}
+
+function startScheduleTicker() {
+    clearScheduleTicker();
+    const update = () => {
+        let waiting = false;
+        document.querySelectorAll('[data-schedule-start]').forEach(element => {
+            const start = Number(element.dataset.scheduleStart);
+            const remaining = start - Date.now();
+            const container = element.closest('.combined-exam-card, .subject-schedule-wrap');
+            const button = container?.querySelector('[data-start-exam-button]');
+            if (remaining > 0) {
+                waiting = true;
+                element.textContent = `Starts in ${formatScheduleCountdown(remaining)}`;
+                if (button) {
+                    button.disabled = true;
+                    button.textContent = button.dataset.waitingLabel || 'Exam not open yet';
+                }
+            } else {
+                element.textContent = 'Available now';
+                if (button) {
+                    button.disabled = button.dataset.permanentlyDisabled === 'true';
+                    button.textContent = button.dataset.readyLabel || 'Start Exam';
+                }
+            }
+        });
+        if (!waiting) clearScheduleTicker();
+    };
+    update();
+    if (document.querySelector('[data-schedule-start]')) scheduleTicker = setInterval(update, 1000);
+}
+
+function renderScheduleBlock(examName, permanentlyDisabled, readyLabel) {
+    const start = getExamScheduleStart(examName);
+    if (!start) return '<div class="schedule-block"><small>No start time scheduled</small></div>';
+    const startLabel = new Date(start).toLocaleString();
+    return `<div class="schedule-block"><small>Scheduled: ${escapeReviewHtml(startLabel)}</small><strong data-schedule-start="${start}">${Date.now() < start ? `Starts in ${formatScheduleCountdown(start - Date.now())}` : 'Available now'}</strong></div>`;
+}
+
 function showCombinedExamSetup() {
+    clearScheduleTicker();
     const selection = document.getElementById("subject-selection");
     if (!availableMockExams.length) {
         selection.innerHTML = `<h2>Combined Subject Exams</h2><p>No active combined exam is configured yet. Ask the admin to create one from the Combined Subject menu.</p>`;
@@ -272,21 +451,28 @@ function showCombinedExamSetup() {
                 count: allData.filter(question => normalizeSubjectName(question.Subject) === normalizeSubjectName(subject)).length
             }));
             const ready = counts.every(item => item.count > 0);
+            const scheduledAt = getExamScheduleStart(exam.name);
+            const future = scheduledAt !== null && scheduledAt > Date.now();
+            const unavailable = !ready || hasCompletedExam(exam.name);
+            const startLabel = hasCompletedExam(exam.name) ? 'Completed' : ready ? 'Start Combined Exam' : 'Questions unavailable';
             return `<article class="combined-exam-card">
                 <h3>${escapeHtml(exam.name)}</h3>
                 <p><b>Subjects:</b></p>
                 <div class="combined-subject-list">${counts.map(item => `<div class="combined-subject-item"><i class="fa-solid fa-book-open"></i><strong>${escapeHtml(item.subject)}</strong><b>${item.count}</b><span>Questions</span><small>${exam.subjectDurations.get(normalizeSubjectName(item.subject)) || 0} minutes</small></div>`).join("")}</div>
                 <p class="combined-total-time"><b>Total Duration:</b> ${exam.duration} minutes</p>
-                <button type="button" class="btn-submit" data-mock-exam-index="${index}" ${ready && !hasCompletedExam(exam.name) ? "" : "disabled"}>${hasCompletedExam(exam.name) ? "Completed" : ready ? "Start Combined Exam" : "Questions unavailable"}</button>
+                ${renderScheduleBlock(exam.name, unavailable, startLabel)}
+                <button type="button" class="btn-submit" data-start-exam-button data-ready-label="${escapeReviewHtml(startLabel)}" data-waiting-label="Exam not open yet" data-permanently-disabled="${unavailable ? 'true' : 'false'}" data-mock-exam-index="${index}" ${unavailable || future ? "disabled" : ""}>${future ? 'Exam not open yet' : startLabel}</button>
             </article>`;
         }).join("") + `</div>`;
     selection.querySelectorAll("[data-mock-exam-index]").forEach(button => button.addEventListener("click", () => {
         startExam(availableMockExams[Number(button.dataset.mockExamIndex)]);
     }));
+    startScheduleTicker();
 }
 
 // সাইডবার থেকে কোনো সাবজেক্ট সিলেক্ট করলে যা হবে
 function selectSubject(subjectName, element) {
+    clearScheduleTicker();
     // মেনুর একটিভ ক্লাস কন্ট্রোল
     document.querySelectorAll('.sidebar ul li a').forEach(a => a.classList.remove('active'));
     element.classList.add('active');
@@ -314,13 +500,20 @@ function selectSubject(subjectName, element) {
     document.getElementById('quiz-container').style.display = "none";
     document.getElementById('result-container').style.display = "none";
 
+    const configuredExam = examConfigurations.find(exam => normalizeSubjectName(exam.Subject) === normalizeSubjectName(subjectName) && normalizeSubjectName(exam.Status) === 'active');
+    const scheduleName = configuredExam?.Exam_Name || subjectName;
+    const scheduledAt = getExamScheduleStart(scheduleName);
+    const waiting = scheduledAt !== null && scheduledAt > Date.now();
     document.getElementById('subject-selection').innerHTML = `
         <h3 style="color: #1e293b; margin-top: 0;">বিষয়: ${subjectName}</h3>
         <p style="color: #64748b; line-height: 1.6;">এই পরীক্ষায় মোট <b>${subjectQuestions.length}টি</b> প্রশ্ন রয়েছে। সর্বমোট নম্বর <b>${totalMarks}</b> এবং পরীক্ষার জন্য নির্ধারিত সময় <b>${subjectDuration} মিনিট</b>।</p>
-        <button onclick="startExam('${subjectName}')" class="btn-submit" style="width: AUto; margin-top: 15px;">পরীক্ষা শুরু করুন</button>
+        <div class="subject-schedule-wrap">${renderScheduleBlock(scheduleName, false, 'Start Exam')}
+        <button type="button" class="btn-submit" data-start-exam-button data-ready-label="Start Exam" data-waiting-label="Exam not open yet" data-permanently-disabled="false" style="width: AUto; margin-top: 15px;" ${waiting ? 'disabled' : ''}>${waiting ? 'Exam not open yet' : 'পরীক্ষা শুরু করুন'}</button></div>
     `;
     const startButton = document.querySelector('#subject-selection .btn-submit');
     if (startButton) startButton.textContent = 'Start Exam';
+    if (startButton) startButton.addEventListener('click', () => startExam(subjectName, scheduleName));
+    startScheduleTicker();
 }
 
 function startTimer(minutes) {
@@ -361,11 +554,18 @@ function cancelExam() {
     setupSidebarSubjects();
 }
 
-function startExam(selectedSubject) {
+function startExam(selectedSubject, scheduleName = null) {
     currentMockExam = selectedSubject && !Array.isArray(selectedSubject) && typeof selectedSubject === "object"
         ? selectedSubject
         : null;
     currentAttemptName = currentMockExam ? currentMockExam.name : String(selectedSubject);
+    const gateName = currentMockExam ? currentMockExam.name : (scheduleName || String(selectedSubject));
+    const scheduledStart = getExamScheduleStart(gateName);
+    if (scheduledStart !== null && Date.now() < scheduledStart) {
+        alert(`This exam will open at ${new Date(scheduledStart).toLocaleString()}.`);
+        return;
+    }
+    clearScheduleTicker();
     if (hasCompletedExam(currentAttemptName)) {
         alert("You have already completed this exam. A second attempt is not allowed.");
         return;
@@ -392,8 +592,8 @@ function startExam(selectedSubject) {
     currentQuestions.forEach((q, index) => {
         questionsHtml += `
         <div class="question-block" style="font-size: ${GLOBAL_FONT_SIZE}; margin-bottom: 25px; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
-            ${q.Image_URL || q.Image || q.Time ? `<img class="question-image" src="${q.Image_URL || q.Image || q.Time}" alt="Question image" loading="lazy" onerror="this.style.display='none'">` : ''}
             <p><small style="color:#8b5cf6;font-weight:600;">${q.Subject}</small><br><b class="question-label">Question ${getQuestionDisplayNumber(index)}:</b> <span class="question-text">${renderQuestionContent(q.Question)}</span><br><small style="color: #64748b;">(+${q.Mark} correct | -${q.Negative_Mark} wrong)</small></p>
+            ${q.Image_URL || q.Image || q.Time ? `<img class="question-image" src="${q.Image_URL || q.Image || q.Time}" alt="Question image" loading="lazy" onerror="this.style.display='none'">` : ''}
             <div class="options" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
                 <label><input type="radio" name="q${index}" value="A" onchange="showQuestion(currentQuestionIndex)"> A) ${q.Option_A}</label>
                 <label><input type="radio" name="q${index}" value="B" onchange="showQuestion(currentQuestionIndex)"> B) ${q.Option_B}</label>

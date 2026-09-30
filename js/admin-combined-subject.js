@@ -36,30 +36,31 @@ async function loadConfiguredSubjects() {
         return;
     }
 
-    const grouped = new Map();
-    configuredSubjectOptions.forEach((option, index) => {
-        if (!grouped.has(option.examName)) grouped.set(option.examName, []);
-        grouped.get(option.examName).push({ ...option, index });
-    });
-    container.innerHTML = [...grouped].map(([examName, options]) => `
-        <section style="grid-column:1/-1;">
-            <h3 style="margin:14px 0 8px;font-size:14px;color:#475569;">${escapeCombinedHtml(examName)}</h3>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;">
-                ${options.map(option => `
-                    <label class="subject-option">
-                        <input type="checkbox" name="combined-subject" value="${option.index}" data-subject-key="${escapeCombinedHtml(normalizeValue(option.subject))}">
-                        <span>${escapeCombinedHtml(option.subject)}<small style="display:block;margin-top:4px;color:#6b7280;">${option.duration} min</small></span>
-                    </label>`).join("")}
-            </div>
-        </section>`).join("");
+    const examNames = [...new Map(configuredSubjectOptions.map(option => [normalizeValue(option.examName), option.examName])).values()];
+    const examSelect = document.getElementById('combined-exam-name');
+    examSelect.innerHTML = '<option value="">Select an exam name</option>' + examNames
+        .map(name => `<option value="${escapeCombinedHtml(name)}">${escapeCombinedHtml(name)}</option>`).join('');
+    examSelect.addEventListener('change', renderConfiguredSubjects);
+    renderConfiguredSubjects();
+}
 
-    container.querySelectorAll('input[name="combined-subject"]').forEach(input => input.addEventListener("change", () => {
-        if (input.checked) {
-            container.querySelectorAll(`input[name="combined-subject"][data-subject-key="${CSS.escape(input.dataset.subjectKey)}"]`)
-                .forEach(other => { if (other !== input) other.checked = false; });
-        }
+function renderConfiguredSubjects() {
+    const name = document.getElementById('combined-exam-name').value;
+    const container = document.getElementById('subject-options');
+    const options = configuredSubjectOptions.map((option, index) => ({...option, index}))
+        .filter(option => normalizeValue(option.examName) === normalizeValue(name));
+    if (!name) {
+        container.innerHTML = '<p>Select an exam name to see its subjects.</p>';
         updateSelectedCount();
-    }));
+        return;
+    }
+    container.innerHTML = options.map(option => `
+        <label class="subject-option">
+            <input type="checkbox" name="combined-subject" value="${option.index}">
+            <span>${escapeCombinedHtml(option.subject)}<small style="display:block;margin-top:4px;color:#6b7280;">${option.duration} min</small></span>
+        </label>`).join('') || '<p>No subjects are configured for this exam name.</p>';
+    container.querySelectorAll('input[name="combined-subject"]').forEach(input => input.addEventListener('change', updateSelectedCount));
+    updateSelectedCount();
 }
 
 function getSelectedOptions() {
@@ -164,8 +165,8 @@ document.getElementById("combined-subject-form").addEventListener("submit", asyn
         message.style.color = "#059669";
         button.textContent = "Saved ✓";
         message.textContent = "Combined exam saved.";
-        document.getElementById("combined-subject-form").reset();
-        updateSelectedCount();
+        document.getElementById("combined-exam-name").value = '';
+        renderConfiguredSubjects();
         await loadCombinedExams();
     } catch (error) {
         message.style.color = "#dc2626";

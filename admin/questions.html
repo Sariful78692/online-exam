@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="../js/admin-auth.js?v=20260930-3"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Questions - Admin Panel</title>
@@ -31,9 +32,16 @@
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .form-group { display: flex; flex-direction: column; gap: 8px; }
         .form-group.full-width { grid-column: span 2; }
+        .question-settings-row { grid-column:1/-1; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; max-width:560px; }
         .form-group label { font-size: 13px; font-weight: 600; color: var(--text-dark); }
         .form-group input, .form-group select, .form-group textarea { padding: 10px 15px; border: 1px solid var(--border-color); border-radius: 8px; outline: none; font-size: 14px; font-family: 'Inter', sans-serif; }
         .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary); }
+        .math-tools { display:none; flex-wrap:wrap; gap:7px; padding:10px; border:1px solid #ddd6fe; border-radius:9px; background:#f5f3ff; }
+        .math-tools.visible { display:flex; }
+        .math-tool { min-width:40px; border:1px solid #c4b5fd; border-radius:7px; padding:7px 10px; background:#fff; color:#4c1d95; font-size:15px; font-weight:600; cursor:pointer; }
+        .math-tool:hover { background:#ede9fe; }
+        .math-preview { min-height:48px; padding:12px; border:1px dashed #c4b5fd; border-radius:9px; background:#fff; color:var(--text-dark); overflow-x:auto; }
+        .math-preview:empty::before { content:'Equation preview will appear here'; color:var(--text-gray); font-size:13px; }
         
         .btn-submit { background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 20px; transition: 0.2s; }
         .btn-submit:hover { background: #7c3aed; }
@@ -73,6 +81,7 @@
             <li><a href="index.html"><i class="fa-solid fa-border-all"></i> Dashboard</a></li>
             <li><a href="exams.html"><i class="fa-solid fa-book-open"></i> Exams</a></li>
             <li><a href="combined-subject.html"><i class="fa-solid fa-layer-group"></i> Combined Subject</a></li>
+            <li><a href="exam-schedule.html"><i class="fa-solid fa-calendar-days"></i> Exam Schedule</a></li>
             <li><a href="lms.html"><i class="fa-solid fa-chalkboard-user"></i> LMS</a></li>
             <li><a href="questions.html"><i class="fa-solid fa-clipboard-question"></i> Questions</a></li>
             <li><a href="students.html"><i class="fa-solid fa-user-group"></i> Students</a></li>
@@ -92,7 +101,7 @@
         </ul>
 
         <div class="sidebar-profile">
-            <img src="https://ui-avatars.com/api/?name=Admin+User&background=8b5cf6&color=fff" alt="Profile">
+            <div class="sidebar-avatar" aria-label="Sariful Sk" style="display:grid;width:35px;height:35px;flex:0 0 35px;place-items:center;border-radius:50%;background:#8b5cf6;color:#fff;font-size:13px;font-weight:700;">SS</div>
             <div class="sidebar-profile-info">
                 <h4>Sariful Sk</h4>
                 <p>sarifulislam55@gmail.com</p>
@@ -119,10 +128,72 @@
                         <label>Subject</label>
                         <select id="subject" required><option value="">Select subject</option></select>
                     </div>
-                    <div class="form-group">
-                        <label>Question Number (serial)</label>
-                        <input type="number" id="question_number" min="1" step="1" required>
+                    <div class="question-settings-row">
+                        <div class="form-group"><label>Question No.</label><input type="number" id="question_number" min="1" step="1" required></div>
+                        <div class="form-group"><label>Mark</label><input type="number" id="mark" step="any" value="1" required></div>
+                        <div class="form-group"><label>Negative Mark</label><input type="number" id="negative_mark" step="any" value="0.25" required></div>
                     </div>
+                    <div class="form-group full-width">
+                        <label>Question</label>
+                        <select id="question-type" aria-label="Question format"><option value="text">Text question</option><option value="math">Math equation (LaTeX)</option></select>
+                        <textarea id="question" rows="2" placeholder="Write your question here..." required></textarea>
+                        <small id="question-type-help" style="color:var(--text-gray);">Use normal text for the question.</small>
+                        <div id="math-tools" class="math-tools" aria-label="Math symbols">
+                            <button type="button" class="math-tool" data-template="\sqrt{}" data-cursor="6" title="Square root">√□</button>
+                            <button type="button" class="math-tool" data-template="\frac{}{}" data-cursor="6" title="Fraction">a⁄b</button>
+                            <button type="button" class="math-tool" data-template="^{}" data-cursor="2" title="Power">xⁿ</button>
+                            <button type="button" class="math-tool" data-template="_{}" data-cursor="2" title="Subscript">xₙ</button>
+                            <button type="button" class="math-tool" data-template="\pi" title="Pi">π</button>
+                            <button type="button" class="math-tool" data-template="\theta" title="Theta">θ</button>
+                            <button type="button" class="math-tool" data-template="\times" title="Multiply">×</button>
+                            <button type="button" class="math-tool" data-template="\div" title="Divide">÷</button>
+                            <button type="button" class="math-tool" data-template="\le" title="Less than or equal">≤</button>
+                            <button type="button" class="math-tool" data-template="\ge" title="Greater than or equal">≥</button>
+                            <button type="button" class="math-tool" data-template="\neq" title="Not equal">≠</button>
+                            <button type="button" class="math-tool" data-template="\left(\right)" data-cursor="6" title="Parentheses">( )</button>
+                            <button type="button" class="math-tool" data-template="\left[\right]" data-cursor="6" title="Square brackets">[ ]</button>
+                            <button type="button" class="math-tool" data-template="\left\lvert\right\rvert" data-cursor="11" title="Absolute value">|x|</button>
+                            <button type="button" class="math-tool" data-template="\sqrt[3]{}" data-cursor="9" title="Cube root">∛□</button>
+                            <button type="button" class="math-tool" data-template="\frac{}{}" data-cursor="7" title="Fraction (numerator)">Fraction</button>
+                            <button type="button" class="math-tool" data-template="\binom{}{}" data-cursor="7" title="Combination">ⁿCᵣ</button>
+                            <button type="button" class="math-tool" data-template="\overline{}" data-cursor="10" title="Overline">x̅</button>
+                            <button type="button" class="math-tool" data-template="\vec{}" data-cursor="5" title="Vector">v⃗</button>
+                            <button type="button" class="math-tool" data-template="\sin()" data-cursor="5" title="Sine">sin</button>
+                            <button type="button" class="math-tool" data-template="\cos()" data-cursor="5" title="Cosine">cos</button>
+                            <button type="button" class="math-tool" data-template="\tan()" data-cursor="5" title="Tangent">tan</button>
+                            <button type="button" class="math-tool" data-template="\log()" data-cursor="5" title="Logarithm">log</button>
+                            <button type="button" class="math-tool" data-template="\ln()" data-cursor="4" title="Natural logarithm">ln</button>
+                            <button type="button" class="math-tool" data-template="\lim_{x\to}" data-cursor="6" title="Limit">lim</button>
+                            <button type="button" class="math-tool" data-template="\sum_{i=1}^{n}" data-cursor="6" title="Summation">∑</button>
+                            <button type="button" class="math-tool" data-template="\prod_{i=1}^{n}" data-cursor="7" title="Product">∏</button>
+                            <button type="button" class="math-tool" data-template="\int_{a}^{b}" data-cursor="6" title="Integral">∫</button>
+                            <button type="button" class="math-tool" data-template="\infty" title="Infinity">∞</button>
+                            <button type="button" class="math-tool" data-template="\approx" title="Approximately equal">≈</button>
+                            <button type="button" class="math-tool" data-template="\pm" title="Plus or minus">±</button>
+                            <button type="button" class="math-tool" data-template="^\circ" title="Degree">°</button>
+                            <button type="button" class="math-tool" data-template="\alpha" title="Alpha">α</button>
+                            <button type="button" class="math-tool" data-template="\beta" title="Beta">β</button>
+                            <button type="button" class="math-tool" data-template="\gamma" title="Gamma">γ</button>
+                            <button type="button" class="math-tool" data-template="\Delta" title="Delta">Δ</button>
+                            <button type="button" class="math-tool" data-template="\Omega" title="Omega">Ω</button>
+                            <button type="button" class="math-tool" data-template="\in" title="Element of">∈</button>
+                            <button type="button" class="math-tool" data-template="\notin" title="Not an element of">∉</button>
+                            <button type="button" class="math-tool" data-template="\subseteq" title="Subset or equal">⊆</button>
+                            <button type="button" class="math-tool" data-template="\cup" title="Union">∪</button>
+                            <button type="button" class="math-tool" data-template="\cap" title="Intersection">∩</button>
+                            <button type="button" class="math-tool" data-template="\to" title="Arrow">→</button>
+                            <button type="button" class="math-tool" data-template="\Rightarrow" title="Implies">⇒</button>
+                            <button type="button" class="math-tool" data-template="\therefore" title="Therefore">∴</button>
+                            <button type="button" class="math-tool" data-template="\begin{matrix}{}&{}\\{}&{}\end{matrix}" data-cursor="15" title="2 by 2 matrix">Matrix</button>
+                        </div>
+                        <div id="math-preview" class="math-preview" aria-live="polite"></div>
+                    </div>
+
+                    <div class="form-group"><label>Option A</label><input type="text" id="opt_a" required></div>
+                    <div class="form-group"><label>Option B</label><input type="text" id="opt_b" required></div>
+                    <div class="form-group"><label>Option C</label><input type="text" id="opt_c" required></div>
+                    <div class="form-group"><label>Option D</label><input type="text" id="opt_d" required></div>
+
                     <div class="form-group">
                         <label>Correct Answer</label>
                         <select id="correct_answer" required>
@@ -133,19 +204,7 @@
                             <option value="D">Option D</option>
                         </select>
                     </div>
-                    
-                    <div class="form-group full-width">
-                        <label>Question</label>
-                        <textarea id="question" rows="2" placeholder="Write your question here..." required></textarea>
-                    </div>
 
-                    <div class="form-group"><label>Option A</label><input type="text" id="opt_a" required></div>
-                    <div class="form-group"><label>Option B</label><input type="text" id="opt_b" required></div>
-                    <div class="form-group"><label>Option C</label><input type="text" id="opt_c" required></div>
-                    <div class="form-group"><label>Option D</label><input type="text" id="opt_d" required></div>
-
-                    <div class="form-group"><label>Mark</label><input type="number" id="mark" step="any" value="1" required></div>
-                    <div class="form-group"><label>Negative Mark</label><input type="number" id="negative_mark" step="any" value="0.25" required></div>
                     <div class="form-group full-width"><label>Question Image URL (optional)</label><input type="url" id="image_url" placeholder="https://example.com/image.jpg"></div>
                     
                     <!-- Time is kept hidden or defAUlt to 0 since global timer is used, but keeping ID to prevent JS errors -->
@@ -184,8 +243,10 @@
 
     </main>
 
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <!-- Scripts (Make sure these are correct based on your folder structure) -->
-    <script src="../js/api.js"></script>
-    <script src="../js/admin-questions.js?v=20260930-2"></script>
+    <script src="../js/api.js?v=20260930-4"></script>
+    <script src="../js/admin-questions.js?v=20260930-5"></script>
 </body>
 </html>

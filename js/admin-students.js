@@ -59,7 +59,7 @@ async function addStudent(event) {
 async function loadStudentsTable() {
     const tbody = document.getElementById("students-table-body");
     try {
-        allStudents = await fetchData("Students");
+        allStudents = await fetchData("Students", { forceRefresh: true });
         tbody.innerHTML = "";
 
         if (!allStudents || allStudents.length === 0) {
@@ -67,7 +67,14 @@ async function loadStudentsTable() {
             return;
         }
 
-        allStudents.forEach((student, index) => {
+        const approvedStudents = allStudents.map((student, index) => ({ student, index }))
+            .filter(({ student }) => String(student.Status || '').trim().toLowerCase() !== 'pending');
+        if (!approvedStudents.length) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #6b7280;">No approved students found.</td></tr>`;
+            return;
+        }
+
+        approvedStudents.forEach(({ student, index }) => {
             const sheetRowIndex = index + 2; // +2 কারণ গুগল শিটে ১ নং রো হলো হেডার
 
             const tr = document.createElement("tr");
@@ -95,7 +102,7 @@ async function toggleStudentStatus(index) {
     const nextStatus = String(student.Status || '').trim().toLowerCase() === 'active' ? 'Inactive' : 'Active';
     const rowData = [student.Student_ID, student.Name, student.Phone, student.Password, nextStatus, student.Email || ''];
     try {
-        const response = await saveData('Students', rowData, 'update', index + 2);
+        const response = await saveData('Students', rowData, 'update', Number(student._rowIndex) || index + 2);
         if (response.status === 'success') await loadStudentsTable();
         else alert(`Could not ${nextStatus === 'Active' ? 'activate' : 'deactivate'} this student.`);
     } catch (_) {

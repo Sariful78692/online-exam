@@ -58,11 +58,7 @@ document.getElementById('schedule-form').addEventListener('submit', async event 
     message.textContent = '';
     try {
         const key = scheduleKey(name);
-        const index = scheduleSettings.findIndex(row => String(row.Setting_Name || '').toLocaleLowerCase() === key);
-        const rowData = [key, start.toISOString()];
-        const response = index < 0
-            ? await saveData('Settings', rowData, 'add')
-            : await saveData('Settings', rowData, 'update', index + 2);
+        const response = await saveSetting(key, start.toISOString());
         if (response.status !== 'success') throw new Error('Save failed');
         message.style.color = '#047857';
         message.textContent = 'Exam schedule saved.';

@@ -11,7 +11,8 @@ if (timeForm) {
         btn.disabled = true;
 
         try {
-            await saveData("Settings", ["Total_Time", newTime]);
+            const result = await saveSetting("Total_Time", newTime);
+            if (result.status !== 'success') throw new Error('Could not save exam time');
             alert("পরীক্ষার মোট সময় সফলভাবে " + newTime + " মিনিট সেট করা হয়েছে!");
             timeForm.reset();
         } catch (error) {
@@ -35,7 +36,8 @@ if (fontForm) {
         btn.disabled = true;
 
         try {
-            await saveData("Settings", ["Font_Size", newSize]);
+            const result = await saveSetting("Font_Size", newSize);
+            if (result.status !== 'success') throw new Error('Could not save font size');
             alert("প্রশ্নের ফন্ট সাইজ সফলভাবে " + newSize + " সেট করা হয়েছে!");
             fontForm.reset();
         } catch (error) {

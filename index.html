@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Login - Online Exam</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/student-login.css">
 </head>
@@ -24,7 +25,8 @@
         </form>
         <form id="register-form">
             <div class="form-group floating-field"><input type="text" id="register-name" placeholder=" " autocomplete="name" required><label for="register-name">Full Name</label></div>
-            <div class="form-group floating-field"><input type="tel" id="register-mobile" placeholder=" " inputmode="tel" autocomplete="tel" required><label for="register-mobile">Mobile Number (Student ID)</label></div>
+            <div class="form-group floating-field"><input type="tel" id="register-mobile" placeholder=" " inputmode="tel" autocomplete="tel" required><label for="register-mobile">Mobile Number</label></div>
+            <div class="form-group floating-field"><input type="email" id="register-email" placeholder=" " autocomplete="email" required><label for="register-email">Email Address</label></div>
             <div class="form-group floating-field"><input type="password" id="register-password" placeholder=" " minlength="4" autocomplete="new-password" required><label for="register-password">Create Password</label></div>
             <button type="submit" class="btn-submit" id="register-btn">Create Account</button>
             <p id="register-msg" style="text-align: center; margin-top: 15px; font-weight: bold;"></p>
@@ -32,7 +34,7 @@
         <p class="auth-switch"><span id="auth-switch-prompt">New student?</span> <button type="button" id="auth-switch-btn">Register here</button></p>
     </div>
 
-    <script src="js/api.js?v=20260930-4"></script>
-    <script src="js/login.js?v=20260930-3"></script>
+    <script src="js/api.js?v=20260930-6"></script>
+    <script src="js/login.js?v=20260930-12"></script>
 </body>
 </html>

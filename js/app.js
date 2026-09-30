@@ -107,6 +107,16 @@ function updateAvailableQuestionCount() {
 }
 
 window.addEventListener('load', async () => {
+    const updateStudentClock = () => {
+        const now = new Date();
+        const date = document.getElementById('student-current-date');
+        const time = document.getElementById('student-current-time');
+        if (date) date.textContent = now.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
+        if (time) time.textContent = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    };
+    updateStudentClock();
+    setInterval(updateStudentClock, 1000);
+
     const studentDataStr = sessionStorage.getItem("loggedInStudent");
     if (!studentDataStr) {
         window.location.href = "index.html"; 

@@ -33,14 +33,8 @@ document.getElementById('brand-settings-form').addEventListener('submit', async 
     button.textContent = 'Saving...';
     message.textContent = '';
     try {
-        // Settings are stored as append-only rows in this app; readers use the newest matching value.
-        const result = await saveData('Settings', [BRAND_SETTING_KEY, name], 'add');
-        if (result.status !== 'success') {
-            const latestData = await fetchData('Settings');
-            const latestSettings = Array.isArray(latestData) ? latestData : (Array.isArray(latestData?.value) ? latestData.value : []);
-            const latestName = [...latestSettings].reverse().find(setting => setting.Setting_Name === BRAND_SETTING_KEY)?.Setting_Value;
-            if (latestName !== name) throw new Error('Save was not confirmed by the database');
-        }
+        const result = await saveSetting(BRAND_SETTING_KEY, name);
+        if (result.status !== 'success') throw new Error('Save was not confirmed by the database');
         message.style.color = '#059669';
         message.textContent = 'Panel name saved. Student panel will use this name when it opens.';
         const data = await fetchData('Settings');

@@ -10,6 +10,7 @@
             const settings = Array.isArray(data) ? data : (Array.isArray(data?.value) ? data.value : []);
             const brandName = [...settings].reverse().find(row => row.Setting_Name === 'Brand_Name')?.Setting_Value;
             if (brandName) {
+                localStorage.setItem('Brand_Name', String(brandName).trim());
                 document.querySelectorAll('.logo-area,.logo').forEach(element => {
                     const textNode = [...element.childNodes].find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
                     if (textNode) textNode.textContent = ` ${brandName}`;

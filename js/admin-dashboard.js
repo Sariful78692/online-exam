@@ -1,73 +1,107 @@
+let dashboardStudents = [];
+
+function escapeAdminDashboardText(value) {
+    return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
+}
+
+function renderPendingStudentNotifications(students) {
+    dashboardStudents = Array.isArray(students) ? students : [];
+    const pending = dashboardStudents
+        .map((student, index) => ({ student, index }))
+        .filter(({ student }) => String(student.Status || '').trim().toLowerCase() === 'pending');
+    const badge = document.getElementById('pending-student-count');
+    const list = document.getElementById('pending-student-list');
+    badge.textContent = pending.length;
+    badge.style.display = pending.length ? 'grid' : 'none';
+
+    if (!pending.length) {
+        list.innerHTML = '<p class="pending-empty">No pending registrations.</p>';
+        return;
+    }
+
+    list.innerHTML = pending.map(({ student, index }) => `<div class="pending-student">
+        <div><strong>${escapeAdminDashboardText(student.Name || 'Student')}</strong><small>${escapeAdminDashboardText(student.Student_ID || student.Phone || '')}</small></div>
+        <button type="button" class="pending-approve" data-approve-student="${index}">Approve</button>
+    </div>`).join('');
+    list.querySelectorAll('[data-approve-student]').forEach(button => button.addEventListener('click', () => approvePendingStudent(Number(button.dataset.approveStudent), button)));
+}
+
+async function refreshPendingStudentNotifications() {
+    const list = document.getElementById('pending-student-list');
+    list.innerHTML = '<p class="pending-empty">Checking registrations...</p>';
+    try {
+        const students = await fetchData('Students', { forceRefresh: true });
+        renderPendingStudentNotifications(students);
+        document.getElementById('total-students').textContent = students.filter(student => String(student.Status || '').trim().toLowerCase() === 'active').length;
+    } catch (_) {
+        list.innerHTML = '<p class="pending-empty">Could not check registrations. Try again.</p>';
+    }
+}
+
+async function approvePendingStudent(index, button) {
+    const student = dashboardStudents[index];
+    if (!student || String(student.Status || '').trim().toLowerCase() !== 'pending') return;
+    button.disabled = true;
+    button.textContent = 'Approving…';
+    const rowIndex = Number(student._rowIndex) || index + 2;
+    const row = [student.Student_ID, student.Name, student.Phone, student.Password, 'Active', student.Email || ''];
+    try {
+        const result = await saveData('Students', row, 'update', rowIndex);
+        if (result.status !== 'success') throw new Error('Approval was not saved');
+        const students = await fetchData('Students', { forceRefresh: true });
+        renderPendingStudentNotifications(students);
+        document.getElementById('total-students').textContent = students.filter(item => String(item.Status || '').trim().toLowerCase() === 'active').length;
+    } catch (_) {
+        button.disabled = false;
+        button.textContent = 'Approve';
+        alert('Could not approve this student. Please try again.');
+    }
+}
+
 window.onload = async () => {
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    document.getElementById("current-date").innerText = new Date().toLocaleDateString('en-GB', options);
+    const now = new Date();
+    const hour = now.getHours();
+    const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
+    const brandName = localStorage.getItem('Brand_Name')?.trim() || 'Admin';
+    document.getElementById('greeting-name').textContent = `${greeting}, ${brandName}`;
+    const updateDateTime = () => {
+        const current = new Date();
+        document.getElementById('current-date').textContent = current.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
+        document.getElementById('current-time').textContent = current.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    };
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+
+    const notificationButton = document.getElementById('admin-notifications-button');
+    const notificationPanel = document.getElementById('admin-notifications-panel');
+    notificationButton.addEventListener('click', () => {
+        const isOpen = notificationPanel.classList.toggle('open');
+        notificationButton.setAttribute('aria-expanded', String(isOpen));
+        if (isOpen) refreshPendingStudentNotifications();
+    });
 
     try {
-        const cacheKey = "admin-dashboard-data-v2";
-        let dashboardData;
-        try {
-            const cached = JSON.parse(sessionStorage.getItem(cacheKey) || "null");
-            if (cached && Date.now() - cached.savedAt < 60000) dashboardData = cached.data;
-        } catch (_) { }
-        if (!dashboardData) {
-            const [questionsData, studentsData, resultsData, examsData] = await Promise.all([
-                fetchData("Questions"), fetchData("Students"), fetchData("Results"), fetchData("Exams")
-            ]);
-            dashboardData = { questionsData, studentsData, resultsData, examsData };
-            try { sessionStorage.setItem(cacheKey, JSON.stringify({ savedAt: Date.now(), data: dashboardData })); } catch (_) { }
-        }
-        const { questionsData, studentsData, resultsData, examsData } = dashboardData;
+        const [questionsData, studentsData, examsData, settingsData] = await Promise.all([
+            fetchData("Questions"), fetchData("Students"), fetchData("Exams"), fetchData("Settings")
+        ]);
+        renderPendingStudentNotifications(studentsData);
+        const settings = Array.isArray(settingsData) ? settingsData : (Array.isArray(settingsData?.value) ? settingsData.value : []);
+        const savedBrandName = [...settings].reverse().find(setting => setting.Setting_Name === 'Brand_Name')?.Setting_Value;
+        const finalBrandName = String(savedBrandName || localStorage.getItem('Brand_Name') || 'Admin').trim();
+        if (finalBrandName !== 'Admin') localStorage.setItem('Brand_Name', finalBrandName);
+        document.getElementById('greeting-name').textContent = `${greeting}, ${finalBrandName}`;
         document.getElementById("total-questions").innerText = questionsData?.length || 0;
-        document.getElementById("total-students").innerText = studentsData?.length || 0;
-        document.getElementById("total-exams").innerText = resultsData?.length || 0;
-
-        const container = document.getElementById("recent-results-body");
-        if (!resultsData?.length) {
-            container.innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:20px;color:#6b7280;">No exam results found.</p>';
-            return;
-        }
-        const studentNames = new Map((studentsData || []).map(student => [String(student.Student_ID || '').trim(), student.Name || student.Student_Name || 'Student']));
-        container.innerHTML = resultsData.slice(-5).reverse().map(result => {
-            const studentId = String(result.Student_ID || '').trim();
-            const studentName = studentNames.get(studentId) || result.Student_Name || 'Student';
-            const examName = result.Exam_Name || result.Exam_Title || result.Subject || 'Exam';
-            const total = Number(result.Total_Questions || result.Total_Question || 0) || 0;
-            const correct = Number(result.Right_Answers || result.Correct || 0) || 0;
-            const wrong = Number(result.Wrong_Answers || result.Wrong_Answer || result.Wrong || 0) || 0;
-            const unanswered = Number(result.Missed_Answers || result.Missed_Answer || result.Missed || Math.max(0, total - correct - wrong)) || 0;
-            const negative = getNegativeMark(result, questionsData, examsData, wrong);
-            const score = result.Score ?? result.Total_Score ?? 0;
-            return `<article class="recent-result-card">
-                <div class="recent-result-head"><div><h4>${escapeAdminHtml(studentName)}</h4><p>${escapeAdminHtml(studentId)} · ${escapeAdminHtml(examName)}</p></div><strong class="recent-result-score">${escapeAdminHtml(score)}</strong></div>
-                <div class="recent-result-stats"><span>Total<strong>${total || '-'}</strong></span><span>Correct<strong>${correct}</strong></span><span class="wrong">Wrong<strong>${wrong}</strong></span><span>Unanswered<strong>${unanswered}</strong></span></div>
-                <div class="recent-result-stats" style="margin-top:7px;grid-template-columns:1fr;"><span class="negative">Negative Mark<strong>${negative}</strong></span></div>
-                <small class="recent-result-date"><i class="fa-regular fa-clock"></i> ${escapeAdminHtml(result.Date || '-')}</small>
-            </article>`;
-        }).join('');
+        document.getElementById("total-students").innerText = (studentsData || [])
+            .filter(student => String(student.Status || '').trim().toLowerCase() === 'active').length;
+        document.getElementById("total-exams").innerText = examsData?.length || 0;
+        refreshPendingStudentNotifications();
+        setInterval(() => {
+            if (!document.hidden) refreshPendingStudentNotifications();
+        }, 30000);
     } catch (error) {
         console.error("Dashboard Data Fetch Error:", error);
-        document.getElementById("recent-results-body").innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:20px;color:red;">Could not load dashboard data.</p>';
+        document.getElementById("total-questions").innerText = '—';
+        document.getElementById("total-students").innerText = '—';
+        document.getElementById("total-exams").innerText = '—';
     }
 };
-
-function escapeAdminHtml(value) {
-    return String(value ?? '').replace(/[&<>"']/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[character]);
-}
-
-function getNegativeMark(result, questions, exams, wrongCount) {
-    const saved = result.Negative_Marks ?? result.Negative_Mark ?? result.Total_Negative_Mark;
-    if (saved !== undefined && saved !== null && String(saved).trim() !== '') return Math.abs(Number(saved) || 0);
-    const examName = String(result.Exam_Name || result.Exam_Title || '').trim().toLocaleLowerCase();
-    const subject = String(result.Subject || '').trim().toLocaleLowerCase();
-    const combinedSubjects = new Set((exams || []).filter(exam =>
-        String(exam.Exam_Name || '').trim().toLocaleLowerCase() === examName &&
-        String(exam.Status || '').trim().toLocaleLowerCase() === 'combined'
-    ).map(exam => String(exam.Subject || '').trim().toLocaleLowerCase()).filter(Boolean));
-    const values = [...new Set((questions || []).filter(question => {
-        const questionExam = String(question.Exam_Name || '').trim().toLocaleLowerCase();
-        const questionSubject = String(question.Subject || '').trim().toLocaleLowerCase();
-        return (examName && questionExam === examName) || (subject && questionSubject === subject) || combinedSubjects.has(questionSubject);
-    }).map(question => Number(question.Negative_Mark)).filter(value => Number.isFinite(value) && value > 0))];
-    if (values.length === 1) return Number((values[0] * wrongCount).toFixed(2));
-    return values.length > 1 ? 'Varies' : '—';
-}

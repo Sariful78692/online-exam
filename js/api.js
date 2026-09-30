@@ -5,11 +5,12 @@ const API_INFLIGHT = new Map();
 const API_MAX_CONCURRENT = 2;
 let apiActiveRequests = 0;
 
-async function fetchData(sheetName) {
+async function fetchData(sheetName, options = {}) {
     const cacheKey = `${API_CACHE_PREFIX}${sheetName}`;
+    const forceRefresh = options.forceRefresh === true;
     let cached = null;
     try { cached = JSON.parse(localStorage.getItem(cacheKey) || 'null'); } catch (_) { }
-    if (cached && Object.prototype.hasOwnProperty.call(cached, 'data') && Date.now() - cached.savedAt < API_CACHE_TTL) return cached.data;
+    if (!forceRefresh && cached && Object.prototype.hasOwnProperty.call(cached, 'data') && Date.now() - cached.savedAt < API_CACHE_TTL) return cached.data;
     if (API_INFLIGHT.has(sheetName)) return API_INFLIGHT.get(sheetName);
 
     const request = (async () => {
@@ -17,7 +18,7 @@ async function fetchData(sheetName) {
             while (apiActiveRequests >= API_MAX_CONCURRENT) await new Promise(resolve => setTimeout(resolve, 40));
             apiActiveRequests++;
             const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 5000);
+            const timeout = setTimeout(() => controller.abort(), 15000);
             try {
                 const retryToken = attempt ? `&_retry=${Date.now()}` : '';
                 const response = await fetch(`${API_URL}?sheet=${encodeURIComponent(sheetName)}${retryToken}`, {
@@ -32,6 +33,11 @@ async function fetchData(sheetName) {
                 if (attempt === 0 && /HTTP 404/.test(String(error.message))) {
                     await new Promise(resolve => setTimeout(resolve, 300));
                     continue;
+                }
+                if (forceRefresh) {
+                    try { localStorage.removeItem(cacheKey); } catch (_) { }
+                    console.error(`Could not refresh ${sheetName}:`, error);
+                    throw error;
                 }
                 if (cached && Object.prototype.hasOwnProperty.call(cached, 'data')) {
                     console.warn(`Using the last saved ${sheetName} data because the server is unavailable.`);
@@ -52,9 +58,12 @@ async function fetchData(sheetName) {
 }
 
 async function saveData(sheetName, data, action = "add", rowIndex = null) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
     try {
         const response = await fetch(API_URL, {
             method: "POST",
+            signal: controller.signal,
             headers: {
                 "Content-Type": "text/plain;charset=utf-8",
             },
@@ -77,5 +86,41 @@ async function saveData(sheetName, data, action = "add", rowIndex = null) {
     } catch (error) {
         console.error("Save error:", error);
         return { status: "error" };
+    } finally {
+        clearTimeout(timeout);
+        try { localStorage.removeItem(`${API_CACHE_PREFIX}${sheetName}`); } catch (_) { }
+    }
+}
+
+async function saveSetting(settingName, settingValue) {
+    const key = String(settingName || '').trim();
+    if (!key) return { status: 'error', message: 'Setting name is required.' };
+    try {
+        const data = await fetchData('Settings', { forceRefresh: true });
+        const rows = Array.isArray(data) ? data : (Array.isArray(data?.value) ? data.value : []);
+        const matches = rows.map((row, index) => ({ row, index, rowIndex: Number(row._rowIndex) || index + 2 }))
+            .filter(item => String(item.row.Setting_Name || '').trim() === key)
+            .sort((a, b) => a.rowIndex - b.rowIndex);
+        const latest = matches[matches.length - 1];
+        let result = latest
+            ? await saveData('Settings', [key, settingValue], 'update', latest.rowIndex)
+            : await saveData('Settings', [key, settingValue], 'add');
+
+        if (result.status !== 'success') {
+            const verifyData = await fetchData('Settings', { forceRefresh: true });
+            const verifyRows = Array.isArray(verifyData) ? verifyData : (Array.isArray(verifyData?.value) ? verifyData.value : []);
+            const saved = [...verifyRows].reverse().find(row => String(row.Setting_Name || '').trim() === key);
+            if (String(saved?.Setting_Value ?? '') !== String(settingValue ?? '')) return result;
+            result = { status: 'success' };
+        }
+
+        // Clean older duplicate rows for this key so the Settings sheet stays unique.
+        for (const duplicate of matches.slice(0, -1).sort((a, b) => b.rowIndex - a.rowIndex)) {
+            await saveData('Settings', [], 'delete', duplicate.rowIndex);
+        }
+        return result;
+    } catch (error) {
+        console.error(`Could not save setting ${key}:`, error);
+        return { status: 'error', message: error.message };
     }
 }

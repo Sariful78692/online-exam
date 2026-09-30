@@ -60,9 +60,14 @@
             <div class="menu-category">Management</div>
             <ul class="sidebar-menu">
                 <li><a href="results.html"><i class="fa-solid fa-database"></i> Results Database</a></li>
+                <li><a href="#"><i class="fa-solid fa-chart-line"></i> Statistics</a></li>
+                <li><a href="#"><i class="fa-solid fa-certificate"></i> Certificates</a></li>
             </ul>
             <div class="menu-category">System</div>
-            <ul class="sidebar-menu"><li><a href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a></li></ul>
+            <ul class="sidebar-menu">
+                <li><a href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a></li>
+                <li><a href="#"><i class="fa-solid fa-circle-info"></i> Help</a></li>
+            </ul>
         </aside>
         <main class="main-content">
             <section class="panel">
@@ -85,7 +90,7 @@
                 <h2>Configured Combined Exams</h2>
                 <div style="overflow-x:auto;">
                     <table>
-                        <thead><tr><th>Exam Name</th><th>Subjects</th><th>Total Duration</th><th>Status</th></tr></thead>
+                        <thead><tr><th>Exam Name</th><th>Subjects</th><th>Total Duration</th><th>Status</th><th>Action</th></tr></thead>
                         <tbody id="combined-exams-list"><tr><td colspan="4">Loading...</td></tr></tbody>
                     </table>
                 </div>
@@ -93,6 +98,6 @@
         </main>
     </div>
     <script src="../js/api.js"></script>
-    <script src="../js/admin-combined-subject.js"></script>
+    <script src="../js/admin-combined-subject.js?v=20260930-2"></script>
 </body>
 </html>

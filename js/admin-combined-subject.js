@@ -72,29 +72,68 @@ function updateSelectedCount() {
     const selected = getSelectedOptions();
     const duration = selected.reduce((total, option) => total + option.duration, 0);
     document.getElementById("selected-count").textContent = `${selected.length} subjects selected · combined duration: ${duration} minutes (choose at least 2)`;
-    document.getElementById("save-combined-exam").disabled = selected.length < 2;
+    const saveButton = document.getElementById("save-combined-exam");
+    saveButton.disabled = selected.length < 2;
+    if (!selected.length || !saveButton.disabled) saveButton.textContent = "Save Combined Exam";
 }
 
 async function loadCombinedExams() {
-    examRows = await fetchData("Exams") || [];
+    examRows = (await fetchData("Exams") || []).map((row, index) => ({
+        ...row,
+        _rowIndex: Number(row._rowIndex) || index + 2
+    }));
     const groups = new Map();
-    examRows.filter(row => normalizeValue(row.Status) === "combined").forEach(row => {
+    examRows.filter(row => ["combined", "inactive"].includes(normalizeValue(row.Status))).forEach(row => {
         const name = String(row.Exam_Name || "").trim();
         const subject = String(row.Subject || "").trim();
         if (!name || !subject) return;
         const key = normalizeValue(name);
-        if (!groups.has(key)) groups.set(key, { name, subjects: [], duration: 0 });
+        if (!groups.has(key)) groups.set(key, { name, subjects: [], duration: 0, rows: [] });
         const group = groups.get(key);
+        group.rows.push(row);
         if (!group.subjects.some(item => normalizeValue(item) === normalizeValue(subject))) {
             group.subjects.push(subject);
             group.duration += Number(row.Duration) || 0;
         }
     });
     const combined = [...groups.values()].filter(group => group.subjects.length >= 2);
-    document.getElementById("combined-exams-list").innerHTML = combined.map(group => `
+    document.getElementById("combined-exams-list").innerHTML = combined.map((group, index) => {
+        const active = group.rows.some(row => normalizeValue(row.Status) === "combined");
+        return `
         <tr><td>${escapeCombinedHtml(group.name)}</td><td>${escapeCombinedHtml(group.subjects.join(", "))}</td>
-        <td>${group.duration} min</td><td>Active</td></tr>`).join("") ||
-        '<tr><td colspan="4">No combined exams configured yet.</td></tr>';
+        <td>${group.duration} min</td><td><span style="color:${active ? '#059669' : '#dc2626'};font-weight:600;">${active ? 'Active' : 'Inactive'}</span></td>
+        <td><button type="button" class="toggle-combined-btn" data-combined-index="${index}" style="padding:7px 11px;border:0;border-radius:7px;background:${active ? '#dc2626' : '#059669'};color:#fff;font-weight:600;cursor:pointer;">${active ? 'Disable' : 'Enable'}</button></td></tr>`;
+    }).join("") ||
+        '<tr><td colspan="5">No combined exams configured yet.</td></tr>';
+    document.querySelectorAll("[data-combined-index]").forEach(button => button.addEventListener("click", () => {
+        toggleCombinedExam(combined[Number(button.dataset.combinedIndex)]);
+    }));
+}
+
+async function toggleCombinedExam(group) {
+    if (!group || !group.rows?.length) return;
+    const active = group.rows.some(row => normalizeValue(row.Status) === "combined");
+    const nextStatus = active ? "Inactive" : "Combined";
+    if (!confirm(`${active ? "Disable" : "Enable"} combined exam "${group.name}" for students?`)) return;
+    const buttons = [...document.querySelectorAll("[data-combined-index]")];
+    buttons.forEach(item => item.disabled = true);
+    try {
+        for (const row of group.rows) {
+            const rowIndex = Number(row._rowIndex);
+            const updated = [row.Exam_Name, row.Subject, row.Duration, row.Full_Marks || row.FullMarks || "", row.Pass_Mark || "", nextStatus];
+            const response = await saveData("Exams", updated, "update", rowIndex);
+            if (!response || response.status !== "success") throw new Error(response?.message || "Could not disable exam.");
+        }
+        try {
+            const disabledKey = `combined-exam-disabled:${normalizeValue(group.name)}`;
+            if (active) localStorage.removeItem(disabledKey);
+            else localStorage.setItem(disabledKey, "1");
+        } catch (_) { }
+        await loadCombinedExams();
+    } catch (error) {
+        alert(error.message || "Could not disable combined exam.");
+        buttons.forEach(item => item.disabled = false);
+    }
 }
 
 document.getElementById("combined-subject-form").addEventListener("submit", async event => {
@@ -107,8 +146,9 @@ document.getElementById("combined-subject-form").addEventListener("submit", asyn
 
     examRows = await fetchData("Exams") || [];
     button.disabled = true;
-    message.style.color = "#64748b";
-    message.textContent = "Saving combined exam...";
+    const originalButtonText = button.textContent;
+    button.textContent = "Saving...";
+    message.textContent = "";
     try {
         for (const option of selected) {
             const existingIndex = examRows.findIndex(row => normalizeValue(row.Exam_Name) === normalizeValue(name) &&
@@ -122,7 +162,8 @@ document.getElementById("combined-subject-form").addEventListener("submit", asyn
             if (!response || response.status !== "success") throw new Error(response?.message || `Could not save ${option.subject}.`);
         }
         message.style.color = "#059669";
-        message.textContent = "Combined exam saved. Selected subjects now move from My Subjects to the student's Combined Subject menu.";
+        button.textContent = "Saved ✓";
+        message.textContent = "Combined exam saved.";
         document.getElementById("combined-subject-form").reset();
         updateSelectedCount();
         await loadCombinedExams();
@@ -132,5 +173,6 @@ document.getElementById("combined-subject-form").addEventListener("submit", asyn
         await loadCombinedExams();
     } finally {
         button.disabled = document.querySelectorAll('input[name="combined-subject"]:checked').length < 2;
+        if (!button.disabled && button.textContent === "Saving...") button.textContent = originalButtonText;
     }
 });

@@ -3,6 +3,11 @@ let exams = [];
 let currentQuestionPage = 1;
 const QUESTIONS_PER_PAGE = 10;
 
+function isQuestionExamConfig(exam) {
+    const status = String(exam?.Status || '').trim().toLocaleLowerCase();
+    return status !== 'combined' && status !== 'inactive';
+}
+
 window.onload = async () => {
     await loadQuestionExams();
     await loadQuestions();
@@ -17,10 +22,7 @@ async function restoreQuestionFormDefaults() {
         return;
     }
     const examSelect = document.getElementById('exam_name');
-    if (saved.exam && ![...examSelect.options].some(option => option.value === saved.exam)) {
-        examSelect.add(new Option(saved.exam, saved.exam));
-    }
-    examSelect.value = saved.exam || '';
+    examSelect.value = [...examSelect.options].some(option => option.value === saved.exam) ? saved.exam : '';
     await loadQuestionSubjects();
     const subjectSelect = document.getElementById('subject');
     if (saved.subject && ![...subjectSelect.options].some(option => option.value === saved.subject)) {
@@ -36,6 +38,7 @@ async function loadQuestionExams() {
     exams = await fetchData('Exams');
     const examSelect = document.getElementById('exam_name');
     const uniqueExamNames = [...new Map((exams || [])
+        .filter(isQuestionExamConfig)
         .map(exam => String(exam.Exam_Name || '').trim())
         .filter(Boolean)
         .map(name => [name.toLocaleLowerCase(), name])).values()];
@@ -49,10 +52,13 @@ async function loadQuestionSubjects() {
     const select = document.getElementById('subject');
     const previousSubject = select.value;
     const selectedExam = document.getElementById('exam_name').value;
-    const examSubjects = (exams || []).filter(exam => !selectedExam || exam.Exam_Name === selectedExam).map(exam => exam.Subject);
+    const selectedExamKey = selectedExam.toLocaleLowerCase();
+    const examSubjects = (exams || []).filter(isQuestionExamConfig)
+        .filter(exam => !selectedExam || String(exam.Exam_Name || '').trim().toLocaleLowerCase() === selectedExamKey)
+        .map(exam => exam.Subject);
     const saved = await fetchData('Subjects');
     let names = [...new Set(examSubjects.filter(Boolean))];
-    if (!names.length) names = (saved || []).map(s => s.Subject_Name || s.Subject).filter(Boolean);
+    if (!selectedExam && !names.length) names = (saved || []).map(s => s.Subject_Name || s.Subject).filter(Boolean);
     select.innerHTML = '<option value="">Select subject</option>' + names.map(name =>
         `<option value="${escapeQuestionHtml(name)}">${escapeQuestionHtml(name)}</option>`).join('');
     if (previousSubject && [...select.options].some(option => option.value === previousSubject)) select.value = previousSubject;
@@ -165,7 +171,7 @@ async function editQuestion(index) {
     const examSelect = document.getElementById('exam_name');
     const savedExam = String(q.Exam_Name || '').trim();
     const matchingExam = [...examSelect.options].find(option => option.value.toLocaleLowerCase() === savedExam.toLocaleLowerCase());
-    examSelect.value = matchingExam ? matchingExam.value : (examSelect.options[1]?.value || '');
+    examSelect.value = matchingExam ? matchingExam.value : '';
     await loadQuestionSubjects();
     const subjectSelect = document.getElementById('subject');
     const subjectName = String(q.Subject || '').trim();

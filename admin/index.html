@@ -226,6 +226,30 @@
             font-weight: bold;
             color: var(--primary);
         }
+
+        .stat-card { position:relative; overflow:hidden; border-color:transparent; background:linear-gradient(135deg,#ffffff,#ede9fe); box-shadow:0 7px 20px rgba(109,40,217,.12); }
+        .stat-card:nth-child(2) { background:linear-gradient(135deg,#ffffff,#dbeafe); box-shadow:0 7px 20px rgba(37,99,235,.12); }
+        .stat-card:nth-child(3) { background:linear-gradient(135deg,#ffffff,#d1fae5); box-shadow:0 7px 20px rgba(5,150,105,.12); }
+        .recent-results-panel { background:#fff; padding:20px; border-radius:16px; border:1px solid var(--border-color); flex:1; overflow-x:auto; }
+        .recent-results-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; }
+        .recent-result-card { position:relative; overflow:hidden; padding:18px; border:1px solid transparent; border-radius:15px; background:linear-gradient(145deg,#ffffff,#ede9fe); box-shadow:0 6px 18px rgba(109,40,217,.12); transition:transform .2s,box-shadow .2s; }
+        .recent-result-card:nth-child(2n) { background:linear-gradient(145deg,#ffffff,#dbeafe); box-shadow:0 6px 18px rgba(37,99,235,.12); }
+        .recent-result-card:nth-child(3n) { background:linear-gradient(145deg,#ffffff,#d1fae5); box-shadow:0 6px 18px rgba(5,150,105,.12); }
+        .recent-result-card::before { position:absolute; top:0; right:0; left:0; height:5px; background:#7c3aed; content:""; }
+        .recent-result-card:nth-child(2n)::before { background:#2563eb; }
+        .recent-result-card:nth-child(3n)::before { background:#059669; }
+        .recent-result-card:hover { box-shadow:0 12px 26px rgba(109,40,217,.2); transform:translateY(-4px); }
+        .recent-result-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px; }
+        .recent-result-head h4 { color:#312e81; font-size:17px; }
+        .recent-result-head p { margin-top:4px; color:var(--text-gray); font-size:12px; }
+        .recent-result-score { color:#047857; font-size:23px; font-weight:800; white-space:nowrap; }
+        .recent-result-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:7px; }
+        .recent-result-stats span { padding:8px 4px; border:1px solid rgba(255,255,255,.8); border-radius:8px; background:rgba(255,255,255,.75); color:var(--text-gray); font-size:11px; text-align:center; }
+        .recent-result-stats strong { display:block; margin-top:3px; color:var(--text-dark); font-size:15px; }
+        .recent-result-stats .wrong strong { color:#dc2626; }
+        .recent-result-stats .negative strong { color:#b45309; }
+        .recent-result-date { display:block; margin-top:12px; color:var(--text-gray); font-size:11px; }
+        @media (max-width:700px) { .recent-result-stats { grid-template-columns:repeat(2,1fr); } }
     </style>
 </head>
 <body>
@@ -315,22 +339,11 @@
         </div>
 
         <!-- Recent Results Table -->
-        <div style="background: white; padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); flex: 1; overflow-x: AUto;">
+        <div class="recent-results-panel">
             <h3 style="color: var(--text-dark); margin-bottom: 20px; font-size: 16px;">Recent Test Results</h3>
-            <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                <thead>
-                    <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-gray); font-size: 13px;">
-                        <th style="padding: 12px 10px;">Student ID</th>
-                        <th style="padding: 12px 10px;">Subject</th>
-                        <th style="padding: 12px 10px;">Total Questions</th>
-                        <th style="padding: 12px 10px;">Score</th>
-                        <th style="padding: 12px 10px;">Date & Time</th>
-                    </tr>
-                </thead>
-                <tbody id="recent-results-body">
-                    <tr><td colspan="5" style="text-align: center; padding: 20px;">Loading data...</td></tr>
-                </tbody>
-            </table>
+            <div id="recent-results-body" class="recent-results-grid">
+                <p style="text-align:center;padding:20px;color:#6b7280;">Loading data...</p>
+            </div>
         </div>
 
         <!-- Placeholder for Charts or Data Table -->
@@ -342,7 +355,7 @@
     </main>
 
     <script src="../js/api.js"></script>
-    <script src="../js/admin-dashboard.js"></script>
+    <script src="../js/admin-dashboard.js?v=20260930-3"></script>
 
 </body>
 </html>

@@ -37,12 +37,48 @@ function firstNonEmptyResultValue(...values) {
     return values.find(value => value !== undefined && value !== null && String(value).trim() !== '');
 }
 
+function getCanonicalExamName(value) {
+    const rawName = String(value || "").trim();
+    const configured = availableMockExams.find(exam => exam.name.toLocaleLowerCase() === rawName.toLocaleLowerCase());
+    return configured ? configured.name : rawName;
+}
+
+function getResultExamName(result) {
+    return getCanonicalExamName(firstNonEmptyResultValue(
+        result?.Exam_Name,
+        result?.Exam_Title,
+        result?.Test_Name,
+        result?.Subject,
+        "Completed exam"
+    ));
+}
+
 function createAttemptKey(examName) {
     return `${String(loggedInStudent?.Student_ID || "").trim().toLocaleLowerCase()}|${String(examName || "").trim().toLocaleLowerCase()}`;
 }
 
 function hasCompletedExam(examName) {
     return completedExamKeys.has(createAttemptKey(examName));
+}
+
+function getUnavailableSubjectKeys() {
+    const unavailable = new Set();
+    availableSubjects.forEach(subject => {
+        if (hasCompletedExam(subject)) unavailable.add(normalizeSubjectName(subject));
+    });
+    availableMockExams.forEach(exam => {
+        if (hasCompletedExam(exam.name)) {
+            exam.subjects.forEach(subject => unavailable.add(normalizeSubjectName(subject)));
+        }
+    });
+    return unavailable;
+}
+
+function updateAvailableQuestionCount() {
+    const unavailable = getUnavailableSubjectKeys();
+    const availableCount = allData.filter(question => !unavailable.has(normalizeSubjectName(question.Subject))).length;
+    const countElement = document.getElementById("question-count");
+    if (countElement) countElement.innerText = availableCount;
 }
 
 window.onload = async () => {
@@ -81,7 +117,7 @@ window.onload = async () => {
         allData = questionsData || [];
         completedExamKeys = new Set((resultsData || [])
             .filter(result => String(result.Student_ID || "") === String(loggedInStudent.Student_ID || ""))
-            .map(result => createAttemptKey(result.Exam_Name || result.Subject)));
+            .map(result => createAttemptKey(getResultExamName(result))));
         studentResults = (resultsData || []).filter(result => String(result.Student_ID || "") === String(loggedInStudent.Student_ID || ""));
         const localAttemptPrefix = `exam-completed:${String(loggedInStudent.Student_ID || "").trim().toLocaleLowerCase()}|`;
         Object.keys(localStorage).forEach(storageKey => {
@@ -107,7 +143,7 @@ window.onload = async () => {
         });
         const combinedSubjectKeys = new Set(availableMockExams.flatMap(exam => exam.subjects.map(normalizeSubjectName)));
         document.getElementById("subject-count").innerText = availableSubjects.filter(subject => !combinedSubjectKeys.has(normalizeSubjectName(subject))).length;
-        document.getElementById("question-count").innerText = allData.length;
+        updateAvailableQuestionCount();
         document.getElementById("exam-duration").innerText = "Varies";
         document.getElementById("exam-duration-unit").innerText = "by subject";
 
@@ -121,7 +157,7 @@ window.onload = async () => {
             document.getElementById("exam-duration-unit").innerText = "by subject";
             document.querySelectorAll(".sidebar-menu a").forEach(link => link.classList.remove("active"));
             document.getElementById("dashboard-menu").classList.add("active");
-            setupSidebarSubjects();
+            showCombinedExamSetup();
         });
         document.getElementById("combined-exam-menu").addEventListener("click", event => {
             event.preventDefault();
@@ -148,6 +184,7 @@ window.onload = async () => {
         
         if (allData && allData.length > 0) {
             setupSidebarSubjects();
+            showCombinedExamSetup();
             translateStudentPanel();
         } else {
             document.getElementById('subject-selection').innerHTML = "<p>কোনো প্রশ্ন পাওয়া যায়নি।</p>";
@@ -228,20 +265,21 @@ function showCombinedExamSetup() {
     const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
     })[char]);
-    selection.innerHTML = `<h2>Combined Subject Exams</h2><p>Choose an exam configured by your admin. You can switch subjects during the exam; your answers will stay saved.</p>` +
+    selection.innerHTML = `<h2>Combined Subject Exams</h2><p>Choose an exam configured by your admin. You can switch subjects during the exam; your answers will stay saved.</p><div class="combined-exam-grid">` +
         availableMockExams.map((exam, index) => {
             const counts = exam.subjects.map(subject => ({
                 subject,
                 count: allData.filter(question => normalizeSubjectName(question.Subject) === normalizeSubjectName(subject)).length
             }));
             const ready = counts.every(item => item.count > 0);
-            return `<article style="margin-top:16px;padding:16px;border:1px solid #e5e7eb;border-radius:12px;">
-                <h3 style="margin:0 0 8px;color:#1f2937;">${escapeHtml(exam.name)}</h3>
-                <p style="margin:0 0 12px;color:#6b7280;">${escapeHtml(exam.subjects.join(" · "))} · ${exam.duration} minutes</p>
-                <p style="margin:0 0 12px;color:${ready ? '#059669' : '#dc2626'};font-size:13px;">${counts.map(item => `${escapeHtml(item.subject)}: ${item.count} questions`).join(" · ")}</p>
-                <button type="button" class="btn-submit" data-mock-exam-index="${index}" style="width:auto;margin:0;" ${ready && !hasCompletedExam(exam.name) ? "" : "disabled"}>${hasCompletedExam(exam.name) ? "Completed" : ready ? "Start Combined Exam" : "Questions unavailable"}</button>
+            return `<article class="combined-exam-card">
+                <h3>${escapeHtml(exam.name)}</h3>
+                <p><b>Subjects:</b></p>
+                <div class="combined-subject-list">${counts.map(item => `<div class="combined-subject-item"><i class="fa-solid fa-book-open"></i><strong>${escapeHtml(item.subject)}</strong><b>${item.count}</b><span>Questions</span><small>${exam.subjectDurations.get(normalizeSubjectName(item.subject)) || 0} minutes</small></div>`).join("")}</div>
+                <p class="combined-total-time"><b>Total Duration:</b> ${exam.duration} minutes</p>
+                <button type="button" class="btn-submit" data-mock-exam-index="${index}" ${ready && !hasCompletedExam(exam.name) ? "" : "disabled"}>${hasCompletedExam(exam.name) ? "Completed" : ready ? "Start Combined Exam" : "Questions unavailable"}</button>
             </article>`;
-        }).join("");
+        }).join("") + `</div>`;
     selection.querySelectorAll("[data-mock-exam-index]").forEach(button => button.addEventListener("click", () => {
         startExam(availableMockExams[Number(button.dataset.mockExamIndex)]);
     }));
@@ -477,7 +515,9 @@ async function submitExam() {
             number: getQuestionDisplayNumber(index),
             question: q.Question || "",
             options: { A: q.Option_A || "", B: q.Option_B || "", C: q.Option_C || "", D: q.Option_D || "" },
-            selected, correct, status
+            selected, correct, status,
+            mark: Number(q.Mark) || 1,
+            negativeMark: Number(q.Negative_Mark) || 0
         });
     });
 
@@ -496,8 +536,9 @@ async function submitExam() {
             <div><span>Correct</span><strong class="result-correct">${rightAnswers}</strong></div>
             <div><span>Wrong</span><strong class="result-wrong">${wrongAnswers}</strong></div>
             <div><span>Unanswered</span><strong>${missedAnswers}</strong></div>
-            <div class="result-score"><span>Score</span><strong>${Number(score.toFixed(2))}</strong></div>
+            <div class="result-score"><span>Total Number</span><strong>${Number(score.toFixed(2))}</strong></div>
         </div>`;
+    updateAvailableQuestionCount();
     renderExamReview(reviewItems);
 
     const resultData = [
@@ -521,14 +562,14 @@ function escapeReviewHtml(value) {
     })[character]);
 }
 
-function renderExamReview(items, containerId = "exam-review") {
+function renderExamReview(items, containerId = "exam-review", showTitle = true) {
     const container = document.getElementById(containerId);
     if (!items.length) {
         container.innerHTML = '<div class="review-perfect"><strong>No question review available</strong><span>This exam was completed before detailed answer review was enabled.</span></div>';
         return;
     }
     const subjects = [...new Set(items.map(item => item.subject))];
-    container.innerHTML = '<h3 class="review-title">Review your answers</h3>' + subjects.map(subject => {
+    container.innerHTML = (showTitle ? '<h3 class="review-title">Review your answers</h3>' : '') + subjects.map(subject => {
         const subjectItems = items.filter(item => item.subject === subject);
         return `<section class="review-subject"><h4>${escapeReviewHtml(subject)} <span>${subjectItems.length} questions</span></h4>` +
             subjectItems.map(item => `<article class="review-question ${item.status}">
@@ -542,6 +583,53 @@ function renderExamReview(items, containerId = "exam-review") {
     }).join("");
 }
 
+function getReviewMark(item) {
+    if (Number.isFinite(Number(item.mark)) && Number(item.mark) > 0) return Number(item.mark);
+    const question = allData.find(candidate =>
+        normalizeSubjectName(candidate.Subject) === normalizeSubjectName(item.subject) &&
+        String(candidate.Question || "") === String(item.question || "")
+    );
+    return Number(question?.Mark) || 1;
+}
+
+function getSubjectResultStats(items) {
+    const grouped = new Map();
+    items.forEach(item => {
+        const subject = item.subject || "Other";
+        if (!grouped.has(subject)) grouped.set(subject, { subject, total: 0, right: 0, wrong: 0, missed: 0, score: 0 });
+        const stats = grouped.get(subject);
+        const mark = getReviewMark(item);
+        stats.total += mark;
+        if (item.status === "correct") { stats.right++; stats.score += mark; }
+        else if (item.status === "wrong") { stats.wrong++; stats.score -= Number(item.negativeMark) || 0; }
+        else stats.missed++;
+    });
+    return [...grouped.values()];
+}
+
+function getReviewScore(items) {
+    return items.reduce((score, item) => {
+        if (item.status === "correct") return score + getReviewMark(item);
+        if (item.status === "wrong") return score - (Number(item.negativeMark) || 0);
+        return score;
+    }, 0);
+}
+
+function renderSubjectResultCards(items, containerId = "subject-result-cards") {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const stats = getSubjectResultStats(items);
+    container.innerHTML = stats.length ? stats.map(item => `<article class="subject-result-card">
+        <h3>${escapeReviewHtml(item.subject)}</h3>
+        <div class="subject-score">${Number(item.score.toFixed(2))} <small>/ ${Number(item.total.toFixed(2))}</small></div>
+        <div class="subject-result-stats">
+            <span>Correct<strong>${item.right}</strong></span>
+            <span>Wrong<strong>${item.wrong}</strong></span>
+            <span>Unanswered<strong>${item.missed}</strong></span>
+        </div>
+    </article>`).join("") : '<div class="review-perfect"><strong>No subject result available</strong></div>';
+}
+
 function showStudentResultView() {
     const panel = document.getElementById("subject-selection");
     const prefix = `exam-review:${String(loggedInStudent.Student_ID || "").trim().toLocaleLowerCase()}|`;
@@ -550,18 +638,21 @@ function showStudentResultView() {
         .map(key => key.slice(prefix.length));
     const names = [...new Map([
         ...studentResults.map(result => {
-            const examName = String(result.Exam_Name || result.Subject || "").trim();
+            const examName = getResultExamName(result);
             return [examName.toLocaleLowerCase(), examName];
         }),
-        ...reviewNames.map(name => [name.toLocaleLowerCase(), name])
+        ...reviewNames.map(name => {
+            const canonicalName = getCanonicalExamName(name);
+            return [canonicalName.toLocaleLowerCase(), canonicalName];
+        })
     ].filter(([key, name]) => key && name)).values()];
 
     panel.innerHTML = '<h2>Result View</h2><p>Choose an exam to see subject-wise correct, wrong and unanswered questions.</p>' +
         (names.length ? `<div class="student-result-list">${names.map((name, index) => {
-            const result = [...studentResults].reverse().find(row => String(row.Exam_Name || row.Subject || "").trim().toLocaleLowerCase() === name.toLocaleLowerCase());
+            const result = [...studentResults].reverse().find(row => getResultExamName(row).toLocaleLowerCase() === name.toLocaleLowerCase());
             return `<button type="button" class="student-result-card" data-result-name-index="${index}">
                 <span><strong>${escapeReviewHtml(name)}</strong><small>${escapeReviewHtml(result?.Date || "Completed exam")}</small></span>
-                <span class="student-result-score">${escapeReviewHtml(firstNonEmptyResultValue(result?.Score, result?.Total_Score, "View review"))} <small>score</small></span>
+                <span class="student-result-score">${escapeReviewHtml(firstNonEmptyResultValue(result?.Score, result?.Total_Score, "View review"))} <small>Total Number</small></span>
             </button>`;
         }).join("")}</div>` : '<div class="review-perfect"><strong>No completed exams yet</strong><span>Your completed exams and answer reviews will appear here.</span></div>');
 
@@ -570,7 +661,7 @@ function showStudentResultView() {
         const attemptKey = createAttemptKey(name);
         let details = [];
         try { details = JSON.parse(localStorage.getItem(`exam-review:${attemptKey}`) || "[]"); } catch (_) { details = []; }
-        const result = [...studentResults].reverse().find(row => String(row.Exam_Name || row.Subject || "").trim().toLocaleLowerCase() === name.toLocaleLowerCase());
+        const result = [...studentResults].reverse().find(row => getResultExamName(row).toLocaleLowerCase() === name.toLocaleLowerCase());
         const resultTotal = Number(firstNonEmptyResultValue(result?.Total_Questions, result?.Total_Question, result?.Total_Qs, 0)) || 0;
         if (details.length < resultTotal) {
             const upgradedReview = completeOlderReview(details, result, name, resultTotal);
@@ -579,18 +670,37 @@ function showStudentResultView() {
                 try { localStorage.setItem(`exam-review:${attemptKey}`, JSON.stringify(details)); } catch (_) { }
             }
         }
-        const hasCompleteReview = resultTotal > 0 && details.length === resultTotal;
+        const hasCompleteReview = (resultTotal > 0 && details.length === resultTotal) || (!resultTotal && details.length > 0);
         const counts = details.reduce((total, item) => {
             if (item.status === "correct") total.right++;
             else if (item.status === "wrong") total.wrong++;
             else if (item.status === "missing") total.missed++;
             return total;
         }, { right: 0, wrong: 0, missed: 0 });
+        const totalQuestions = resultTotal || details.length;
+        const savedScore = firstNonEmptyResultValue(result?.Score, result?.Total_Score);
+        const displayScore = savedScore !== undefined ? savedScore : (details.length ? Number(getReviewScore(details).toFixed(2)) : "—");
         panel.innerHTML = `<button type="button" class="btn-next" id="result-view-back">← All results</button>
             <h2 style="margin-top:18px;">${escapeReviewHtml(name)}</h2>
-            <p>Score: <b>${escapeReviewHtml(firstNonEmptyResultValue(result?.Score, result?.Total_Score, "—"))}</b> · Correct: <b>${hasCompleteReview ? counts.right : escapeReviewHtml(firstNonEmptyResultValue(result?.Right_Answers, result?.Correct, "—"))}</b> · Wrong: <b>${hasCompleteReview ? counts.wrong : escapeReviewHtml(firstNonEmptyResultValue(result?.Wrong_Answers, result?.Wrong_Answer, result?.Wrong, "—"))}</b> · Unanswered: <b>${hasCompleteReview ? counts.missed : escapeReviewHtml(firstNonEmptyResultValue(result?.Missed_Answers, result?.Missed_Answer, result?.Missed, "—"))}</b></p>
+            <div class="result-detail-summary">
+                <div><span>Total questions</span><strong>${totalQuestions || "—"}</strong></div>
+                <div><span>Total Number</span><strong>${escapeReviewHtml(displayScore)}</strong></div>
+                <div><span>Correct</span><strong>${hasCompleteReview ? counts.right : escapeReviewHtml(firstNonEmptyResultValue(result?.Right_Answers, result?.Correct, "—"))}</strong></div>
+                <div><span>Wrong</span><strong>${hasCompleteReview ? counts.wrong : escapeReviewHtml(firstNonEmptyResultValue(result?.Wrong_Answers, result?.Wrong_Answer, result?.Wrong, "—"))}</strong></div>
+                <div><span>Unanswered</span><strong>${hasCompleteReview ? counts.missed : escapeReviewHtml(firstNonEmptyResultValue(result?.Missed_Answers, result?.Missed_Answer, result?.Missed, "—"))}</strong></div>
+            </div>
+            <h3 class="review-title result-review-heading">Review your answers</h3>
+            <div class="result-filter"><label for="result-subject-filter">Subject</label><select id="result-subject-filter"><option value="all">All subjects</option>${[...new Set(details.map(item => item.subject))].map(subject => `<option value="${escapeReviewHtml(subject)}">${escapeReviewHtml(subject)}</option>`).join("")}</select></div>
+            <div id="subject-result-cards" class="subject-result-grid"></div>
             <div id="saved-exam-review"></div>`;
-        renderExamReview(details, "saved-exam-review");
+        const filter = document.getElementById("result-subject-filter");
+        const renderFilteredResult = () => {
+            const filtered = filter.value === "all" ? details : details.filter(item => item.subject === filter.value);
+            renderSubjectResultCards(filtered);
+            renderExamReview(filtered, "saved-exam-review", false);
+        };
+        filter.addEventListener("change", renderFilteredResult);
+        renderFilteredResult();
         document.getElementById("result-view-back").addEventListener("click", showStudentResultView);
     }));
 }

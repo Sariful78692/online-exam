@@ -28,7 +28,7 @@ async function loadResultsTable() {
         tbody.innerHTML = "";
 
         if (allResults.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: #6b7280;">No exam results found.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #6b7280;">No exam results found.</td></tr>`;
             return;
         }
 
@@ -50,9 +50,10 @@ async function loadResultsTable() {
             const total = Number(firstResultValue(result.Total_Questions, result.Total_Question, result.Total_Qs, 0)) || 0;
             const attempted = Number(firstResultValue(result.Attempted, result.Attempted_Questions, 0)) || 0;
             let countsUnavailable = false;
+            let review = null;
             try {
                 const reviewKey = `exam-review:${studentId.toLocaleLowerCase()}|${String(result.Exam_Name || result.Subject || '').trim().toLocaleLowerCase()}`;
-                const review = JSON.parse(localStorage.getItem(reviewKey) || 'null');
+                review = JSON.parse(localStorage.getItem(reviewKey) || 'null');
                 if (Array.isArray(review) && total > 0 && review.length === total) {
                     right = review.filter(item => item.status === 'correct').length;
                     wrong = review.filter(item => item.status === 'wrong').length;
@@ -72,6 +73,7 @@ async function loadResultsTable() {
                     }
                 }
             } catch (_) { /* Keep the values saved in Results when no local review exists. */ }
+            const negativeMark = calculateNegativeMark(result, wrong, review);
             const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
 
             const tr = document.createElement("tr");
@@ -82,6 +84,7 @@ async function loadResultsTable() {
                 <td>${total || '-'}</td>
                 <td style="color: #10b981; font-weight: bold;" title="${countsUnavailable ? 'This old result did not store the right-answer count.' : ''}">${countsUnavailable ? 'Not recorded' : right}</td>
                 <td style="color: #ef4444; font-weight: bold;" title="${countsUnavailable ? 'This old result did not store the wrong-answer count.' : ''}">${countsUnavailable ? 'Not recorded' : wrong}</td>
+                <td style="color: #b45309; font-weight: bold;">${negativeMark}</td>
                 <td style="color: #6b7280;">${missed}</td>
                 <td><span class="score-badge ${scoreClass}">${scoreValue}</span></td>
                 <td style="font-size: 12px; color: #6b7280;">${result.Date || '-'}</td>
@@ -92,8 +95,30 @@ async function loadResultsTable() {
             tbody.appendChild(tr);
         });
     } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: red;">Error loading results data!</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: red;">Error loading results data!</td></tr>`;
     }
+}
+
+function calculateNegativeMark(result, wrongCount, review) {
+    if (Array.isArray(review) && review.length) {
+        const reviewPenalty = review.reduce((total, item) => item.status === 'wrong' ? total + (Number(item.negativeMark) || 0) : total, 0);
+        if (review.some(item => item.status === 'wrong' && item.negativeMark !== undefined)) {
+            return Number(reviewPenalty.toFixed(2));
+        }
+    }
+
+    const examName = String(result.Exam_Name || result.Exam_Title || result.Subject || '').trim().toLocaleLowerCase();
+    const combinedSubjects = resultExams
+        .filter(exam => String(exam.Exam_Name || '').trim().toLocaleLowerCase() === examName && String(exam.Status || '').trim().toLocaleLowerCase() === 'combined')
+        .map(exam => String(exam.Subject || '').trim().toLocaleLowerCase());
+    const candidates = resultQuestions.filter(question => {
+        const questionExam = String(question.Exam_Name || '').trim().toLocaleLowerCase();
+        const questionSubject = String(question.Subject || '').trim().toLocaleLowerCase();
+        return questionExam === examName || questionSubject === examName || combinedSubjects.includes(questionSubject);
+    });
+    const negativeValues = [...new Set(candidates.map(question => Number(question.Negative_Mark)).filter(value => Number.isFinite(value) && value > 0))];
+    if (negativeValues.length === 1) return Number((negativeValues[0] * wrongCount).toFixed(2));
+    return negativeValues.length > 1 ? 'Varies' : '—';
 }
 
 function deriveUniformMarkCounts(result, attempted, total) {

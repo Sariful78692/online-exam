@@ -1,50 +1,41 @@
-
-// Time Setting
-const timeForm = document.getElementById("time-setting-form");
+const timeForm = document.getElementById('time-setting-form');
 if (timeForm) {
-    timeForm.addEventListener("submit", async function(e) {
-        e.preventDefAUlt();
-        const btn = document.getElementById("time-btn");
-        const newTime = document.getElementById("global-time").value;
-        
-        btn.innerText = "আপডেট হচ্ছে...";
-        btn.disabled = true;
-
+    timeForm.addEventListener('submit', async event => {
+        event.preventDefault();
+        const button = document.getElementById('time-btn');
+        const newTime = document.getElementById('global-time').value;
+        button.disabled = true;
+        button.textContent = 'Updating...';
         try {
-            const result = await saveSetting("Total_Time", newTime);
-            if (result.status !== 'success') throw new Error('Could not save exam time');
-            alert("পরীক্ষার মোট সময় সফলভাবে " + newTime + " মিনিট সেট করা হয়েছে!");
+            const result = await saveSetting('Total_Time', newTime);
+            if (result.status !== 'success') throw new Error('Update failed');
             timeForm.reset();
-        } catch (error) {
-            alert("সময় আপডেট করতে সমস্যা হয়েছে!");
+        } catch (_) {
+            // saveSetting already reports write errors with a toast.
         } finally {
-            btn.innerText = "সময় আপডেট করুন";
-            btn.disabled = false;
+            button.textContent = 'Update Time';
+            button.disabled = false;
         }
     });
 }
 
-// Font Size Setting
-const fontForm = document.getElementById("font-setting-form");
+const fontForm = document.getElementById('font-setting-form');
 if (fontForm) {
-    fontForm.addEventListener("submit", async function(e) {
-        e.preventDefAUlt();
-        const btn = document.getElementById("font-btn");
-        const newSize = document.getElementById("global-font-size").value;
-        
-        btn.innerText = "আপডেট হচ্ছে...";
-        btn.disabled = true;
-
+    fontForm.addEventListener('submit', async event => {
+        event.preventDefault();
+        const button = document.getElementById('font-btn');
+        const newSize = document.getElementById('global-font-size').value;
+        button.disabled = true;
+        button.textContent = 'Updating...';
         try {
-            const result = await saveSetting("Font_Size", newSize);
-            if (result.status !== 'success') throw new Error('Could not save font size');
-            alert("প্রশ্নের ফন্ট সাইজ সফলভাবে " + newSize + " সেট করা হয়েছে!");
+            const result = await saveSetting('Font_Size', newSize);
+            if (result.status !== 'success') throw new Error('Update failed');
             fontForm.reset();
-        } catch (error) {
-            alert("ফন্ট সাইজ আপডেট করতে সমস্যা হয়েছে!");
+        } catch (_) {
+            // saveSetting already reports write errors with a toast.
         } finally {
-            btn.innerText = "ফন্ট সাইজ আপডেট";
-            btn.disabled = false;
+            button.textContent = 'Update Font Size';
+            button.disabled = false;
         }
     });
 }

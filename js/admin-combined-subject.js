@@ -122,7 +122,7 @@ async function toggleCombinedExam(group) {
         for (const row of group.rows) {
             const rowIndex = Number(row._rowIndex);
             const updated = [row.Exam_Name, row.Subject, row.Duration, row.Full_Marks || row.FullMarks || "", row.Pass_Mark || "", nextStatus];
-            const response = await saveData("Exams", updated, "update", rowIndex);
+            const response = await saveData("Exams", updated, "update", rowIndex, { silent: true });
             if (!response || response.status !== "success") throw new Error(response?.message || "Could not disable exam.");
         }
         try {
@@ -131,8 +131,9 @@ async function toggleCombinedExam(group) {
             else localStorage.setItem(disabledKey, "1");
         } catch (_) { }
         await loadCombinedExams();
+        showAppToast(`Combined exam ${active ? 'disabled' : 'enabled'} successfully.`);
     } catch (error) {
-        alert(error.message || "Could not disable combined exam.");
+        showAppToast(error.message || 'Could not update combined exam.', 'error');
         buttons.forEach(item => item.disabled = false);
     }
 }
@@ -159,7 +160,7 @@ document.getElementById("combined-subject-form").addEventListener("submit", asyn
                 existing?.Full_Marks || existing?.FullMarks || "", existing?.Pass_Mark || "", "Combined"];
             const action = existing ? "update" : "add";
             const rowIndex = existing ? (Number(existing._rowIndex) || existingIndex + 2) : null;
-            const response = await saveData("Exams", rowData, action, rowIndex);
+            const response = await saveData("Exams", rowData, action, rowIndex, { silent: true });
             if (!response || response.status !== "success") throw new Error(response?.message || `Could not save ${option.subject}.`);
         }
         message.style.color = "#059669";
@@ -168,10 +169,12 @@ document.getElementById("combined-subject-form").addEventListener("submit", asyn
         document.getElementById("combined-exam-name").value = '';
         renderConfiguredSubjects();
         await loadCombinedExams();
+        showAppToast('Combined exam saved successfully.');
     } catch (error) {
         message.style.color = "#dc2626";
         message.textContent = `Could not save all selected subjects: ${error.message}. Check the combined exam list before retrying.`;
         await loadCombinedExams();
+        showAppToast('Could not save the combined exam. Please check the list and try again.', 'error');
     } finally {
         button.disabled = document.querySelectorAll('input[name="combined-subject"]:checked').length < 2;
         if (!button.disabled && button.textContent === "Saving...") button.textContent = originalButtonText;

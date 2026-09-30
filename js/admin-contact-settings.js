@@ -45,7 +45,6 @@ window.addEventListener('DOMContentLoaded', async () => {
             const contactJson = JSON.stringify({ phone, email });
             const result = await saveSetting(ADMIN_CONTACT_KEY, contactJson);
             if (result.status !== 'success') throw new Error('Contact save was not confirmed by the Settings database');
-            if (!saved) throw new Error('Contact save was not confirmed');
             localStorage.setItem(ADMIN_PHONE_KEY, phone);
             localStorage.setItem(ADMIN_EMAIL_KEY, email);
             localStorage.setItem('Admin_Contact_SavedAt', String(Date.now()));

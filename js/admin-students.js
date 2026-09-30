@@ -104,9 +104,9 @@ async function toggleStudentStatus(index) {
     try {
         const response = await saveData('Students', rowData, 'update', Number(student._rowIndex) || index + 2);
         if (response.status === 'success') await loadStudentsTable();
-        else alert(`Could not ${nextStatus === 'Active' ? 'activate' : 'deactivate'} this student.`);
+        else showAppToast(`Could not ${nextStatus === 'Active' ? 'activate' : 'deactivate'} this student.`, 'error');
     } catch (_) {
-        alert('Server connection error.');
+        showAppToast('Could not update student. Please try again.', 'error');
     }
 }
 
@@ -116,13 +116,12 @@ async function deleteStudent(rowIndex) {
         try {
             const res = await saveData("Students", [], "delete", rowIndex);
             if (res.status === "success") {
-                alert("Student removed successfully!");
                 loadStudentsTable(); // রিলোড টেবিল
             } else {
-                alert("Error removing student!");
+                showAppToast('Could not remove student. Please try again.', 'error');
             }
         } catch (e) {
-            alert("Server connection error!");
+            showAppToast('Could not remove student. Please try again.', 'error');
         }
     }
 }

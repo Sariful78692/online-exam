@@ -762,7 +762,7 @@ async function submitExam() {
         score,
         new Date().toLocaleString()
     ];
-    try { await saveData("Results", resultData); }
+    try { await saveData("Results", resultData, 'add', null, { silent: true }); }
     catch (error) { console.error("Could not save exam result.", error); }
 }
 

@@ -76,5 +76,5 @@ async function removeSchedule(rowIndex) {
     if (!confirm('Remove this exam schedule? Students will be able to start the exam without a schedule.')) return;
     const response = await saveData('Settings', [], 'delete', rowIndex);
     if (response.status === 'success') await loadScheduleAdmin();
-    else alert('Could not remove schedule.');
+    else showAppToast('Could not remove schedule. Please try again.', 'error');
 }

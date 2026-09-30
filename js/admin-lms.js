@@ -47,7 +47,7 @@ async function loadLmsTable() {
 const lmsForm = document.getElementById("lms-form");
 if (lmsForm) {
     lmsForm.addEventListener("submit", async function(e) {
-        e.preventDefAUlt();
+        e.preventDefault();
         const btn = document.getElementById("lms-submit-btn");
         const msg = document.getElementById("lms-message");
         
@@ -95,13 +95,12 @@ async function deleteMaterial(rowIndex) {
         try {
             const res = await saveData("LMS", [], "delete", rowIndex);
             if (res.status === "success") {
-                alert("Material deleted successfully!");
                 loadLmsTable();
             } else {
-                alert("Error deleting material!");
+                showAppToast('Could not delete material. Please try again.', 'error');
             }
         } catch (e) {
-            alert("Server connection error!");
+            showAppToast('Could not delete material. Please try again.', 'error');
         }
     }
 }

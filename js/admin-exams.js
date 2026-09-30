@@ -19,7 +19,7 @@ async function loadSubjects() {
             subjectRows = [...new Set((questions || []).map(q => q.Subject).filter(Boolean))]
                 .map((name, index) => ({ Subject_ID: index + 1, Subject_Name: name }));
             for (const subject of subjectRows) {
-                await saveData("Subjects", [subject.Subject_ID, subject.Subject_Name], "add");
+                await saveData("Subjects", [subject.Subject_ID, subject.Subject_Name], "add", null, { silent: true });
             }
             savedSubjects = await fetchData("Subjects");
             if (savedSubjects && savedSubjects.length) subjectRows = savedSubjects.map((row, index) => ({ ...row, _rowIndex: Number(row._rowIndex) || index + 2 }));
@@ -110,13 +110,12 @@ document.getElementById("edit-subject-btn").addEventListener("click", async func
         for (const question of questions || []) {
             if (question.Subject === oldName && question._rowIndex) {
                 const row = [question.Question_ID, newName.trim(), question.Question, question.Option_A, question.Option_B, question.Option_C, question.Option_D, question.Correct_Answer, question.Mark, question.Negative_Mark];
-                await saveData("Questions", row, "update", question._rowIndex);
+                await saveData("Questions", row, "update", question._rowIndex, { silent: true });
             }
         }
         await loadSubjects();
-        alert("Subject updated successfully.");
     }
-    else alert("Subject update failed.");
+    else showAppToast('Could not update subject. Please try again.', 'error');
 });
 
 document.getElementById("delete-subject-btn").addEventListener("click", async function () {
@@ -125,8 +124,8 @@ document.getElementById("delete-subject-btn").addEventListener("click", async fu
     if (!subject || !subject._rowIndex) return alert("This subject is not saved in Subjects sheet yet.");
     if (!confirm(`Delete subject '${select.value}'?`)) return;
     const result = await saveData("Subjects", [], "delete", subject._rowIndex);
-    if (result.status === "success") { await loadSubjects(); alert("Subject deleted successfully."); }
-    else alert("Subject delete failed.");
+    if (result.status === "success") { await loadSubjects(); }
+    else showAppToast('Could not delete subject. Please try again.', 'error');
 });
 
 // Exams শিট থেকে ডেটা এনে টেবিলে দেখানোর ফাংশন
@@ -291,13 +290,12 @@ async function deleteExam(rowIndex) {
         try {
             const res = await saveData("Exams", [], "delete", rowIndex);
             if (res.status === "success") {
-                alert("Exam deleted successfully!");
                 loadExamsTable();
             } else {
-                alert("Error deleting exam!");
+                showAppToast('Could not delete exam. Please try again.', 'error');
             }
         } catch (e) {
-            alert("Server connection error!");
+            showAppToast('Could not delete exam. Please try again.', 'error');
         }
     }
 }

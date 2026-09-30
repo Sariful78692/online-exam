@@ -98,7 +98,7 @@ loginForm.addEventListener('submit', async event => {
         if (!student && legacyIndex >= 0) {
             const legacy = students[legacyIndex];
             const repaired = { ...legacy, Password: enteredPassword, Status: 'Pending', Email: '' };
-            const repairResponse = await saveData('Students', [repaired.Student_ID, repaired.Name, repaired.Phone, repaired.Password, repaired.Status, repaired.Email], 'update', legacyIndex + 2);
+            const repairResponse = await saveData('Students', [repaired.Student_ID, repaired.Name, repaired.Phone, repaired.Password, repaired.Status, repaired.Email], 'update', legacyIndex + 2, { silent: true });
             if (repairResponse.status === 'success') student = repaired;
         }
         if (!student && !studentIdExists) {

@@ -215,9 +215,8 @@ document.getElementById('question-form').addEventListener('submit', async event 
         document.getElementById('mark').value = keep.mark;
         document.getElementById('negative_mark').value = keep.negativeMark;
         document.getElementById('question_number').value = getNextQuestionNumber();
-        showQuestionToast('Question saved successfully.', 'success');
     } else {
-        showQuestionToast(result.message || 'Could not save question.', 'error');
+        // saveData displays a toast for failed writes.
     }
     button.disabled = false;
     button.textContent = originalText;

@@ -54,7 +54,7 @@ async function approvePendingStudent(index, button) {
     } catch (_) {
         button.disabled = false;
         button.textContent = 'Approve';
-        alert('Could not approve this student. Please try again.');
+        showAppToast('Could not approve this student. Please try again.', 'error');
     }
 }
 

@@ -40,6 +40,49 @@
         .math-tools.visible { display:flex; }
         .math-tool { min-width:40px; border:1px solid #c4b5fd; border-radius:7px; padding:7px 10px; background:#fff; color:#4c1d95; font-size:15px; font-weight:600; cursor:pointer; }
         .math-tool:hover { background:#ede9fe; }
+        .extended-math-palette { flex:1 0 100%; margin-top:4px; border:1px solid #ddd6fe; border-radius:8px; background:#fff; color:var(--text-dark); }
+        .extended-math-palette summary { padding:9px 11px; color:#4c1d95; font-size:13px; font-weight:700; cursor:pointer; }
+        .extended-math-groups { max-height:340px; overflow:auto; padding:0 10px 10px; }
+        .extended-math-group { padding:8px 0; border-top:1px solid #eee; }
+        .extended-math-group strong { display:block; margin:0 0 7px; font-size:12px; }
+        .extended-math-buttons { display:flex; flex-wrap:wrap; gap:5px; }
+        .extended-math-symbol { min-width:32px; padding:5px 7px; }
+        .math-popup-launch { display:none; width:max-content; border:1px solid #c4b5fd; border-radius:7px; padding:7px 11px; background:#f5f3ff; color:#4c1d95; font-weight:600; cursor:pointer; }
+        .option-math-launcher { margin-top:4px; }
+        .option-image-launcher { margin-top:4px; }
+        .math-symbol-dialog { width:min(900px,92vw); max-height:85vh; padding:0; border:0; border-radius:14px; box-shadow:0 20px 70px rgba(15,23,42,.3); }
+        .math-symbol-dialog::backdrop { background:rgba(15,23,42,.48); }
+        .math-symbol-dialog[open] { animation:mathDialogIn .2s ease-out; }
+        .math-symbol-dialog.closing { animation:mathDialogOut .18s ease-in forwards; }
+        @keyframes mathDialogIn { from { opacity:0; transform:scale(.94) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+        @keyframes mathDialogOut { to { opacity:0; transform:scale(.95) translateY(8px); } }
+        .math-dialog-heading { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid var(--border-color); cursor:move; user-select:none; }
+        .math-dialog-heading h3 { font-size:16px; }
+        .math-dialog-close { border:0; border-radius:50%; width:32px; height:32px; background:transparent; font-size:24px; cursor:pointer; color:var(--text-gray); transition:transform .2s ease,background .2s ease; }
+        .math-dialog-close:hover { transform:rotate(90deg) scale(1.12); background:#ede9fe; }
+        .math-symbol-dialog.closing .math-dialog-close { animation:closeButtonOut .18s ease-in forwards; }
+        .math-dialog-content { max-height:calc(85vh - 58px); overflow:auto; padding:12px; }
+        .math-symbol-dialog .math-tools.popup-toolbar { display:flex; max-height:none; border:0; padding:0; background:transparent; }
+        .option-preview { display:none; min-height:40px; }
+        .answer-options-grid { display:grid !important; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; align-items:start; width:100%; }
+        @media (max-width:1100px) { .answer-options-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+        @media (max-width:620px) { .answer-options-grid { grid-template-columns:1fr; } }
+        .question-meta-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
+        @media (max-width:620px) { .question-meta-grid { grid-template-columns:1fr; } }
+        .structure-dialog { width:min(760px,92vw); max-height:88vh; padding:0; border:0; border-radius:14px; box-shadow:0 20px 70px rgba(15,23,42,.35); }
+        .structure-dialog::backdrop { background:rgba(15,23,42,.48); }
+        .structure-dialog[open] { animation:structureDialogIn .2s ease-out; }
+        .structure-dialog.closing { animation:structureDialogOut .18s ease-in forwards; }
+        @keyframes structureDialogIn { from { opacity:0; transform:scale(.94) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+        @keyframes structureDialogOut { to { opacity:0; transform:scale(.95) translateY(8px); } }
+        .structure-dialog-heading { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; color:white; background:linear-gradient(120deg,#6d28d9,#8b5cf6); cursor:move; user-select:none; }
+        .structure-dialog-heading h3 { font-size:16px; }
+        .structure-dialog-close { border:0; border-radius:50%; width:32px; height:32px; color:#fff; background:rgba(255,255,255,.18); font-size:22px; cursor:pointer; transition:transform .2s ease,background .2s ease; }
+        .structure-dialog-close:hover { transform:rotate(90deg) scale(1.12); background:rgba(255,255,255,.32); }
+        .structure-dialog.closing .structure-dialog-close { animation:closeButtonOut .18s ease-in forwards; }
+        @keyframes closeButtonOut { to { transform:rotate(90deg) scale(.65); opacity:0; } }
+        .structure-dialog-content { max-height:calc(88vh - 60px); overflow:auto; padding:12px; }
+        .structure-dialog-content #structure-drawer { display:flex !important; border:0 !important; padding:0 !important; background:transparent !important; }
         .math-preview { min-height:48px; padding:12px; border:1px dashed #c4b5fd; border-radius:9px; background:#fff; color:var(--text-dark); overflow-x:auto; }
         .math-preview:empty::before { content:'Equation preview will appear here'; color:var(--text-gray); font-size:13px; }
         
@@ -136,11 +179,15 @@
                     <div class="form-group full-width">
                         <label>Question</label>
                         <select id="question-type" aria-label="Question format"><option value="text">Text question</option><option value="math">Math equation (LaTeX)</option></select>
-                        <textarea id="question" rows="2" placeholder="Write your question here..." required></textarea>
+                        <textarea id="question" rows="5" placeholder="Write your question here..." required style="min-height:120px; resize:vertical;"></textarea>
                         <small id="question-type-help" style="color:var(--text-gray);">Use normal text for the question.</small>
+                        <button type="button" id="draw-question-diagram" class="math-popup-launch">Draw geometry diagram</button>
+                        <button type="button" id="question-math-launcher" class="math-popup-launch">Open math symbols</button>
                         <div id="math-tools" class="math-tools" aria-label="Math symbols">
                             <button type="button" class="math-tool" data-template="\sqrt{}" data-cursor="6" title="Square root">√□</button>
                             <button type="button" class="math-tool" data-template="\frac{}{}" data-cursor="6" title="Fraction">a⁄b</button>
+                            <button type="button" class="math-tool" data-template="\frac{}{}" data-cursor="6" title="Empty stacked fraction">½</button>
+                            <button type="button" class="math-tool" data-template="1\frac{}{}" data-cursor="7" title="Mixed fraction, e.g. 1 and 1/2">1½</button>
                             <button type="button" class="math-tool" data-template="^{}" data-cursor="2" title="Power">xⁿ</button>
                             <button type="button" class="math-tool" data-template="_{}" data-cursor="2" title="Subscript">xₙ</button>
                             <button type="button" class="math-tool" data-template="\pi" title="Pi">π</button>
@@ -189,23 +236,56 @@
                         <div id="math-preview" class="math-preview" aria-live="polite"></div>
                     </div>
 
-                    <div class="form-group"><label>Option A</label><input type="text" id="opt_a" required></div>
-                    <div class="form-group"><label>Option B</label><input type="text" id="opt_b" required></div>
-                    <div class="form-group"><label>Option C</label><input type="text" id="opt_c" required></div>
-                    <div class="form-group"><label>Option D</label><input type="text" id="opt_d" required></div>
-
-                    <div class="form-group">
-                        <label>Correct Answer</label>
-                        <select id="correct_answer" required>
-                            <option value="">-- Select --</option>
-                            <option value="A">Option A</option>
-                            <option value="B">Option B</option>
-                            <option value="C">Option C</option>
-                            <option value="D">Option D</option>
-                        </select>
+                    <div class="form-group full-width">
+                        <label>Answer options</label>
+                        <small style="color:var(--text-gray);">Choose Math for LaTeX or Image for a chemical structure. Each option has its own equation preview.</small>
+                        <div id="option-math-tools" class="math-tools" aria-label="Option math symbols"></div>
+                        <div id="structure-drawer" style="display:none; flex-direction:column; gap:8px; padding:12px; border:1px solid #ddd6fe; border-radius:9px; background:#faf9ff;">
+                            <div style="display:flex; flex-wrap:wrap; gap:7px; align-items:center;">
+                                <button type="button" class="math-tool" id="draw-benzene">＋ Benzene ring</button>
+                                <button type="button" class="math-tool" id="draw-benzene-circle">Benzene circle</button>
+                                <button type="button" class="math-tool" id="draw-circle">Circle</button>
+                                <button type="button" class="math-tool" id="draw-triangle">Triangle</button>
+                                <button type="button" class="math-tool" id="draw-rectangle">Rectangle</button>
+                                <button type="button" class="math-tool" id="draw-bond">Draw bond</button>
+                                <button type="button" class="math-tool" id="select-structure">Select / Edit</button>
+                                <input type="text" id="structure-label" placeholder="Label, e.g. C or OH" style="max-width:180px; padding:8px; border:1px solid #c4b5fd; border-radius:7px;">
+                                <input type="text" id="structure-subscript" placeholder="Subscript, e.g. 3" aria-label="Label subscript" style="width:125px; padding:8px; border:1px solid #c4b5fd; border-radius:7px;">
+                                <input type="text" id="structure-superscript" placeholder="Superscript, e.g. 2−" aria-label="Label superscript" style="width:145px; padding:8px; border:1px solid #c4b5fd; border-radius:7px;">
+                                <button type="button" class="math-tool" id="draw-label">Add label</button>
+                                <button type="button" class="math-tool" id="update-label" disabled>Update selected label</button>
+                                <button type="button" class="math-tool" id="undo-structure">Undo</button>
+                                <button type="button" class="math-tool" id="clear-structure">Clear</button>
+                                <button type="button" class="math-tool" id="save-structure">Use drawing</button>
+                            </div>
+                            <small style="color:var(--text-gray);">Label adds text such as OH or CH to the drawing: fill Label, optionally fill Subscript (3) or Superscript (2−), click Add label, then click its position on the canvas. For CH₃, enter CH and subscript 3. Drag on the canvas to draw a bond. Undo or Ctrl+Z removes the last drawing item.</small>
+                            <canvas id="structure-canvas" width="520" height="300" tabindex="0" aria-label="Chemical structure drawing canvas" style="width:min(100%,520px); height:auto; border:1px solid #cbd5e1; border-radius:7px; background:white; touch-action:none; cursor:crosshair;"></canvas>
+                        </div>
+                    </div>
+                    <div class="answer-options-grid form-group full-width">
+                        <div class="form-group"><label for="opt_a">Option A</label><select id="opt_a_type" aria-label="Option A format"><option value="text">Text</option><option value="math">Math</option><option value="image">Image</option></select><button type="button" id="opt_a_math_launcher" class="math-popup-launch option-math-launcher">Open math symbols</button><button type="button" id="opt_a_image_launcher" class="math-popup-launch option-image-launcher">Open drawing canvas</button><input type="text" id="opt_a" placeholder="Text, LaTeX, or image URL" required><div id="opt_a_preview" class="math-preview option-preview" aria-live="polite"></div></div>
+                        <div class="form-group"><label for="opt_b">Option B</label><select id="opt_b_type" aria-label="Option B format"><option value="text">Text</option><option value="math">Math</option><option value="image">Image</option></select><button type="button" id="opt_b_math_launcher" class="math-popup-launch option-math-launcher">Open math symbols</button><button type="button" id="opt_b_image_launcher" class="math-popup-launch option-image-launcher">Open drawing canvas</button><input type="text" id="opt_b" placeholder="Text, LaTeX, or image URL" required><div id="opt_b_preview" class="math-preview option-preview" aria-live="polite"></div></div>
+                        <div class="form-group"><label for="opt_c">Option C</label><select id="opt_c_type" aria-label="Option C format"><option value="text">Text</option><option value="math">Math</option><option value="image">Image</option></select><button type="button" id="opt_c_math_launcher" class="math-popup-launch option-math-launcher">Open math symbols</button><button type="button" id="opt_c_image_launcher" class="math-popup-launch option-image-launcher">Open drawing canvas</button><input type="text" id="opt_c" placeholder="Text, LaTeX, or image URL" required><div id="opt_c_preview" class="math-preview option-preview" aria-live="polite"></div></div>
+                        <div class="form-group"><label for="opt_d">Option D</label><select id="opt_d_type" aria-label="Option D format"><option value="text">Text</option><option value="math">Math</option><option value="image">Image</option></select><button type="button" id="opt_d_math_launcher" class="math-popup-launch option-math-launcher">Open math symbols</button><button type="button" id="opt_d_image_launcher" class="math-popup-launch option-image-launcher">Open drawing canvas</button><input type="text" id="opt_d" placeholder="Text, LaTeX, or image URL" required><div id="opt_d_preview" class="math-preview option-preview" aria-live="polite"></div></div>
                     </div>
 
-                    <div class="form-group full-width"><label>Question Image URL (optional)</label><input type="url" id="image_url" placeholder="https://example.com/image.jpg"></div>
+                    <div class="question-meta-grid full-width">
+                        <div class="form-group">
+                            <label>Correct Answer</label>
+                            <select id="correct_answer" required>
+                                <option value="">-- Select --</option>
+                                <option value="A">Option A</option>
+                                <option value="B">Option B</option>
+                                <option value="C">Option C</option>
+                                <option value="D">Option D</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Question Image URL or diagram (optional)</label>
+                            <input type="text" id="image_url" placeholder="https://example.com/image.jpg">
+                            <div id="question-image-preview" class="math-preview" style="display:none;"></div>
+                        </div>
+                    </div>
                     
                     <!-- Time is kept hidden or defAUlt to 0 since global timer is used, but keeping ID to prevent JS errors -->
                     <input type="hidden" id="time" value="0">
@@ -247,6 +327,14 @@
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <!-- Scripts (Make sure these are correct based on your folder structure) -->
     <script src="../js/api.js?v=20260930-toast1"></script>
-    <script src="../js/admin-questions.js?v=20260930-toast1"></script>
+    <script src="../js/admin-questions.js?v=20261002-drawing-edit-points"></script>
+<dialog id="math-symbol-dialog" class="math-symbol-dialog" aria-labelledby="math-dialog-title">
+    <div class="math-dialog-heading"><h3 id="math-dialog-title">Math symbols</h3><button type="button" class="math-dialog-close" aria-label="Close math symbols">&times;</button></div>
+    <div id="math-dialog-content" class="math-dialog-content"></div>
+</dialog>
+<dialog id="structure-dialog" class="structure-dialog" aria-labelledby="structure-dialog-title">
+    <div class="structure-dialog-heading"><h3 id="structure-dialog-title">Geometry drawing</h3><button type="button" class="structure-dialog-close" aria-label="Close drawing canvas">&times;</button></div>
+    <div id="structure-dialog-content" class="structure-dialog-content"></div>
+</dialog>
 </body>
 </html>

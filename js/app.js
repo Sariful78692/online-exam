@@ -20,6 +20,19 @@ let examConfigurations = [];
 let examSchedules = new Map();
 let scheduleTicker = null;
 
+document.addEventListener('keydown', event => {
+    const quiz = document.getElementById('quiz-container');
+    if (!quiz || quiz.style.display === 'none' || event.ctrlKey || event.altKey || event.metaKey) return;
+    const target = event.target;
+    if (target?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName)) return;
+    const option = event.key.toUpperCase();
+    if (!['A', 'B', 'C', 'D'].includes(option)) return;
+    const radio = document.querySelector(`input[name="q${currentQuestionIndex}"][value="${option}"]`);
+    if (!radio) return;
+    event.preventDefault();
+    radio.click();
+});
+
 function normalizeSubjectName(value) {
     const subject = String(value || "").trim().toLocaleLowerCase();
     // Older question rows use "Physic" while combined exams may use "Physics".
@@ -605,10 +618,10 @@ function startExam(selectedSubject, scheduleName = null) {
             <p><small style="color:#8b5cf6;font-weight:600;">${q.Subject}</small><br><b class="question-label">Question ${getQuestionDisplayNumber(index)}:</b> <span class="question-text">${renderQuestionContent(q.Question)}</span><br><small style="color: #64748b;">(+${q.Mark} correct | -${q.Negative_Mark} wrong)</small></p>
             ${q.Image_URL || q.Image || q.Time ? `<img class="question-image" src="${q.Image_URL || q.Image || q.Time}" alt="Question image" loading="lazy" onerror="this.style.display='none'">` : ''}
             <div class="options" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
-                <label><input type="radio" name="q${index}" value="A" onchange="showQuestion(currentQuestionIndex)"> A) ${q.Option_A}</label>
-                <label><input type="radio" name="q${index}" value="B" onchange="showQuestion(currentQuestionIndex)"> B) ${q.Option_B}</label>
-                <label><input type="radio" name="q${index}" value="C" onchange="showQuestion(currentQuestionIndex)"> C) ${q.Option_C}</label>
-                <label><input type="radio" name="q${index}" value="D" onchange="showQuestion(currentQuestionIndex)"> D) ${q.Option_D}</label>
+                <label><input type="radio" name="q${index}" value="A" onchange="showQuestion(currentQuestionIndex)"> A) ${renderOptionContent(q.Option_A)}</label>
+                <label><input type="radio" name="q${index}" value="B" onchange="showQuestion(currentQuestionIndex)"> B) ${renderOptionContent(q.Option_B)}</label>
+                <label><input type="radio" name="q${index}" value="C" onchange="showQuestion(currentQuestionIndex)"> C) ${renderOptionContent(q.Option_C)}</label>
+                <label><input type="radio" name="q${index}" value="D" onchange="showQuestion(currentQuestionIndex)"> D) ${renderOptionContent(q.Option_D)}</label>
             </div>
         </div>`;
     });
@@ -655,6 +668,14 @@ function getVisibleQuestionIndices() {
 }
 
 function getQuestionDisplayNumber(questionIndex) {
+    const question = currentQuestions[questionIndex];
+    const normalizedNumberKey = Object.keys(question || {}).find(key =>
+        ['questionnumber', 'questionno', 'questionnum', 'qnumber', 'qno'].includes(String(key).toLocaleLowerCase().replace(/[^a-z0-9]/g, '')) && Number(question[key]) > 0
+    );
+    const savedQuestionNumber = Number(question?.Question_Number);
+    if (Number.isFinite(savedQuestionNumber) && savedQuestionNumber > 0) return savedQuestionNumber;
+    const alternateQuestionNumber = Number(normalizedNumberKey ? question[normalizedNumberKey] : NaN);
+    if (Number.isFinite(alternateQuestionNumber) && alternateQuestionNumber > 0) return alternateQuestionNumber;
     const subjectKey = normalizeSubjectName(currentQuestions[questionIndex]?.Subject);
     const sectionStarts = new Map([["physics", 1], ["chemistry", 46], ["biology", 91]]);
     if (sectionStarts.has(subjectKey)) {
@@ -676,6 +697,23 @@ function renderQuestionNavigator() {
 
 function renderQuestionContent(value) {
     return String(value || '').replace(/\\\\/g, '\\');
+}
+
+function renderOptionContent(value) {
+    const text = String(value || '');
+    if (text.startsWith('[[IMAGE]]')) {
+        try {
+            const source = text.slice(9);
+            const isDataImage = /^data:image\/(png|jpeg|webp);base64,/i.test(source);
+            const url = isDataImage ? null : new URL(source);
+            if (isDataImage || ['http:', 'https:'].includes(url.protocol)) {
+                const src = isDataImage ? source : url.href.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+                return `<img src="${src}" alt="Answer option structure" loading="lazy" style="max-width:min(320px,70vw);max-height:180px;vertical-align:middle;object-fit:contain" onerror="this.style.display='none'">`;
+            }
+        } catch (_) {}
+        return '[Invalid option image URL]';
+    }
+    return renderQuestionContent(text);
 }
 
 function showQuestion(index) {

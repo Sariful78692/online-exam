@@ -1,7 +1,8 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="../js/admin-auth.js?v=20260930-toast1"></script>
+        <link rel="icon" type="image/png" href="../assets/exam.png">
+<script src="../js/admin-auth.js?v=20260930-toast1"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modern Admin Dashboard</title>
@@ -42,7 +43,7 @@
             display: flex;
             flex-direction: column;
             padding: 20px 15px;
-            overflow-y: AUto;
+            overflow-y: auto;
         }
 
         .logo-area {
@@ -133,7 +134,7 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            overflow-y: AUto;
+            overflow-y: auto;
             background-color: var(--bg-color);
             padding: 20px 30px;
         }
@@ -269,6 +270,7 @@
 <style>.site-copyright-footer{position:fixed;z-index:1200;left:0;right:0;bottom:0;width:100%;padding:6px 12px;border-top:1px solid rgba(139,92,246,.2);background:rgba(255,255,255,.97);box-shadow:0 -3px 12px rgba(31,41,55,.09);color:#4b5563;font:500 11px/1.2 Inter,Arial,sans-serif;letter-spacing:.2px;text-align:center;white-space:nowrap;backdrop-filter:blur(8px);pointer-events:none}@media(max-width:520px){.site-copyright-footer{padding:10px 12px;font-size:10px;white-space:normal}}
 </style>
 <style>body:has(.sidebar) .site-copyright-footer{left:260px;width:calc(100% - 260px)}@media(max-width:760px){body:has(.sidebar) .site-copyright-footer{left:0;width:100%}}@media(max-width:520px){.site-copyright-footer{padding:6px 10px;font-size:10px}}</style>
+    <link rel="stylesheet" href="../css/theme.css">
 </head>
 <body>
 
@@ -315,9 +317,10 @@
     <!-- Main Content Section -->
     <main class="main-content">
         <header class="top-header">
-            <div class="header-greeting">
+                <link rel="icon" type="image/png" href="../assets/exam.png">
+<div class="header-greeting">
                 <h1 id="greeting-name">Good Morning, Admin</h1>
-                <p>Date: <span id="current-date">â€”</span><span class="header-time-separator"> Â· </span>Time: <span id="current-time">â€”</span></p>
+                <p>Date: <span id="current-date">—</span><span class="header-time-separator"> · </span>Time: <span id="current-time">—</span></p>
             </div>
             <div class="header-actions">
                 <div class="notification-wrap">
@@ -362,12 +365,22 @@
 
         </div>
 
+        <section class="analytics-panel" aria-labelledby="exam-participation-title">
+            <div class="analytics-heading">
+                <div><h2 id="exam-participation-title">Exam participation</h2><p>Student attempts grouped by exam</p></div>
+                <div class="analytics-total"><strong id="exam-participation-total">0</strong><span>total attempts</span></div>
+            </div>
+            <div id="exam-participation-chart" class="participation-chart" aria-live="polite">
+                <div class="chart-empty">Loading exam activity...</div>
+            </div>
+        </section>
     </main>
 
     <script src="../js/api.js?v=20260930-toast1"></script>
     <script src="../js/admin-dashboard.js?v=20260930-toast1"></script>
 
 <footer class="site-copyright-footer">Copyright© 2026 Sariful Islam Shake. All rights reserved.</footer>
+    <script src="../js/theme.js"></script>
 </body>
 </html>
 

@@ -1,0 +1,114 @@
+/* Shared appearance settings for the student and admin panels. */
+:root {
+    color-scheme: light;
+    --theme-page: #f3f4f6;
+    --theme-surface: #ffffff;
+    --theme-surface-muted: #f8fafc;
+    --theme-text: #1f2937;
+    --theme-muted: #6b7280;
+    --theme-border: #e5e7eb;
+}
+
+html[data-theme="dark"] {
+    color-scheme: dark;
+    --theme-page: #111827;
+    --theme-surface: #1f2937;
+    --theme-surface-muted: #273449;
+    --theme-text: #e5e7eb;
+    --theme-muted: #aab5c5;
+    --theme-border: #374151;
+}
+
+html[data-theme="dark"] body { background-color: var(--theme-page) !important; color: var(--theme-text); }
+html[data-theme="dark"] :is(.sidebar, .topbar, header, .main-header, .content-panel, .stat-card, .form-container, .table-container, .card, .panel, .notification-dropdown, .dropdown-menu, .modal-content, .settings-card, .result-card, .exam-card, .math-symbol-dialog, .structure-dialog, .extended-math-palette, .math-preview) {
+    background-color: var(--theme-surface) !important;
+    color: var(--theme-text);
+    border-color: var(--theme-border) !important;
+}
+html[data-theme="dark"] :is(h1,h2,h3,h4,h5,p,label,th,td,strong,small,span,li,.text-dark,.stat-info h2,.header-greeting h1,.sidebar-profile-info h4,.content-panel h2) { color: var(--theme-text); }
+html[data-theme="dark"] :is(.text-gray,.text-muted,.menu-category,.sidebar-profile-info p,th,small,.notification-dropdown small) { color: var(--theme-muted); }
+html[data-theme="dark"] :is(input,select,textarea) { background-color: #111827 !important; color: var(--theme-text) !important; border-color: var(--theme-border) !important; }
+html[data-theme="dark"] input::placeholder, html[data-theme="dark"] textarea::placeholder { color: #9ca3af; }
+html[data-theme="dark"] :is(td,th) { border-color: var(--theme-border) !important; }
+html[data-theme="dark"] :is(.sidebar-menu li a,.menu a) { color: var(--theme-muted); }
+html[data-theme="dark"] :is(.sidebar-menu li a:hover,.sidebar-menu li a.active,.menu a:hover,.menu a.active,.exam-subject-tab:hover,.exam-subject-tab.active) { background: #37305a !important; color: #c4b5fd !important; }
+html[data-theme="dark"] :is(.math-tools,.math-popup-launch,#structure-drawer) { background-color: var(--theme-surface-muted) !important; color: var(--theme-text) !important; }
+html[data-theme="dark"] .math-tool { background-color: #273449; color: #e5e7eb; border-color: #6454a5; }
+html[data-theme="dark"] .site-copyright-footer { background: rgba(31,41,55,.97); color: #d1d5db; border-color: var(--theme-border); }
+
+/* Keep the admin overview readable when its original cards use light gradients. */
+html[data-theme="dark"] .main-content { background: #111827 !important; color: #e5e7eb; }
+html[data-theme="dark"] .sidebar { background: #1b2432 !important; border-color: #303b4b !important; }
+html[data-theme="dark"] .sidebar-profile { border-color: #374151 !important; }
+html[data-theme="dark"] .sidebar-profile-info h4,
+html[data-theme="dark"] .header-greeting h1,
+html[data-theme="dark"] .stat-info h2,
+html[data-theme="dark"] .recent-result-head h4 { color: #f3f4f6 !important; }
+html[data-theme="dark"] .sidebar-profile-info p,
+html[data-theme="dark"] .header-greeting p,
+html[data-theme="dark"] .stat-info h3,
+html[data-theme="dark"] .recent-result-head p,
+html[data-theme="dark"] .recent-result-date { color: #c0cad8 !important; }
+html[data-theme="dark"] .stat-card,
+html[data-theme="dark"] .recent-results-panel,
+html[data-theme="dark"] .recent-result-card,
+html[data-theme="dark"] .analytics-panel {
+    background: #1f2937 !important;
+    color: #e5e7eb !important;
+    border-color: #374151 !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,.2) !important;
+}
+html[data-theme="dark"] .recent-result-stats span { background: #273449; border-color: #3b475a; color: #c0cad8; }
+html[data-theme="dark"] .recent-result-stats strong { color: #f3f4f6; }
+html[data-theme="dark"] .notification-button { background: #273449; color: #e5e7eb; border-color: #475569; }
+html[data-theme="dark"] .stat-info .trend { color: #facc15 !important; background: rgba(250,204,21,.16) !important; }
+html[data-theme="dark"] .stat-info .trend i { color: #facc15 !important; }
+html[data-theme="dark"] .review-perfect,
+html[data-theme="dark"] .review-perfect strong,
+html[data-theme="dark"] .review-perfect span { color: #1e3a8a !important; }
+
+.analytics-panel { margin-top: 4px; padding: 22px; border: 1px solid #e5e7eb; border-radius: 18px; background: #fff; box-shadow: 0 8px 24px rgba(31,41,55,.06); }
+.analytics-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:20px; }
+.analytics-heading h2 { margin:0; color:#1f2937; font-size:18px; }
+.analytics-heading p { margin:5px 0 0; color:#6b7280; font-size:12px; }
+.analytics-total { display:grid; justify-items:end; gap:2px; color:#6b7280; font-size:11px; }
+.analytics-total strong { color:#7c3aed; font-size:22px; }
+.participation-chart { display:grid; gap:15px; }
+.participation-row { display:grid; grid-template-columns:minmax(100px, 190px) minmax(50px,1fr) 36px; align-items:center; gap:12px; }
+.participation-name { overflow:hidden; color:#374151; font-size:12px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
+.participation-track { height:12px; overflow:hidden; border-radius:999px; background:#f1f5f9; }
+.participation-bar { height:100%; min-width:0; border-radius:inherit; background:linear-gradient(90deg,#8b5cf6,#38bdf8); transition:width .4s ease; }
+.participation-count { color:#4b5563; font-size:12px; font-weight:700; text-align:right; }
+.chart-empty { padding:24px 12px; border:1px dashed #cbd5e1; border-radius:12px; color:#6b7280; font-size:13px; text-align:center; }
+html[data-theme="dark"] .analytics-heading h2,
+html[data-theme="dark"] .participation-name { color:#f3f4f6; }
+html[data-theme="dark"] .analytics-heading p,
+html[data-theme="dark"] .analytics-total,
+html[data-theme="dark"] .participation-count { color:#c0cad8; }
+html[data-theme="dark"] .analytics-total strong { color:#c4b5fd; }
+html[data-theme="dark"] .participation-track { background:#111827; }
+html[data-theme="dark"] .chart-empty { color:#c0cad8; border-color:#475569; }
+@media(max-width:600px) { .analytics-panel { padding:16px; } .participation-row { grid-template-columns:minmax(80px,120px) minmax(40px,1fr) 28px; gap:8px; } }
+
+.theme-toggle {
+    position: fixed;
+    z-index: 1500;
+    top: 16px;
+    right: 18px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 9px 13px;
+    border: 1px solid #c4b5fd;
+    border-radius: 999px;
+    background: #fff;
+    color: #4c1d95;
+    box-shadow: 0 4px 14px rgba(31,41,55,.14);
+    font: 600 13px/1.2 Inter, Arial, sans-serif;
+    cursor: pointer;
+}
+.theme-toggle:hover { background: #f5f3ff; }
+html[data-theme="dark"] .theme-toggle { background: #273449; color: #e9d5ff; border-color: #6454a5; }
+html[data-theme="dark"] .theme-toggle:hover { background: #374151; }
+@media (max-width: 600px) { .theme-toggle { top: 10px; right: 10px; min-height: 36px; padding: 8px 10px; } }

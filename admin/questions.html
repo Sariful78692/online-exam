@@ -1,7 +1,8 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="../js/admin-auth.js?v=20260930-toast1"></script>
+        <link rel="icon" type="image/png" href="../assets/exam.png">
+<script src="../js/admin-auth.js?v=20260930-toast1"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Questions - Admin Panel</title>
@@ -114,6 +115,7 @@
 <style>.site-copyright-footer{position:fixed;z-index:1200;left:0;right:0;bottom:0;width:100%;padding:6px 12px;border-top:1px solid rgba(139,92,246,.2);background:rgba(255,255,255,.97);box-shadow:0 -3px 12px rgba(31,41,55,.09);color:#4b5563;font:500 11px/1.2 Inter,Arial,sans-serif;letter-spacing:.2px;text-align:center;white-space:nowrap;backdrop-filter:blur(8px);pointer-events:none}@media(max-width:520px){.site-copyright-footer{padding:10px 12px;font-size:10px;white-space:normal}}
 </style>
 <style>body:has(.sidebar) .site-copyright-footer{left:260px;width:calc(100% - 260px)}@media(max-width:760px){body:has(.sidebar) .site-copyright-footer{left:0;width:100%}}@media(max-width:520px){.site-copyright-footer{padding:6px 10px;font-size:10px}}</style>
+    <link rel="stylesheet" href="../css/theme.css">
 </head>
 <body>
 
@@ -189,53 +191,53 @@
                         <button type="button" id="draw-question-diagram" class="math-popup-launch">Draw geometry diagram</button>
                         <button type="button" id="question-math-launcher" class="math-popup-launch">Open math symbols</button>
                         <div id="math-tools" class="math-tools" aria-label="Math symbols">
-                            <button type="button" class="math-tool" data-template="\sqrt{}" data-cursor="6" title="Square root">âˆšâ–¡</button>
-                            <button type="button" class="math-tool" data-template="\frac{}{}" data-cursor="6" title="Fraction">aâ„b</button>
-                            <button type="button" class="math-tool" data-template="\frac{}{}" data-cursor="6" title="Empty stacked fraction">Â½</button>
-                            <button type="button" class="math-tool" data-template="1\frac{}{}" data-cursor="7" title="Mixed fraction, e.g. 1 and 1/2">1Â½</button>
-                            <button type="button" class="math-tool" data-template="^{}" data-cursor="2" title="Power">xâ¿</button>
-                            <button type="button" class="math-tool" data-template="_{}" data-cursor="2" title="Subscript">xâ‚™</button>
-                            <button type="button" class="math-tool" data-template="\pi" title="Pi">Ï€</button>
-                            <button type="button" class="math-tool" data-template="\theta" title="Theta">Î¸</button>
-                            <button type="button" class="math-tool" data-template="\times" title="Multiply">Ã—</button>
-                            <button type="button" class="math-tool" data-template="\div" title="Divide">Ã·</button>
-                            <button type="button" class="math-tool" data-template="\le" title="Less than or equal">â‰¤</button>
-                            <button type="button" class="math-tool" data-template="\ge" title="Greater than or equal">â‰¥</button>
-                            <button type="button" class="math-tool" data-template="\neq" title="Not equal">â‰ </button>
+                            <button type="button" class="math-tool" data-template="\sqrt{}" data-cursor="6" title="Square root">&radic;&#9633;</button>
+                            <button type="button" class="math-tool" data-template="\frac{}{}" data-cursor="6" title="Fraction">a&#8260;b</button>
+                            <button type="button" class="math-tool" data-template="\frac{}{}" data-cursor="6" title="Empty stacked fraction">&frac12;</button>
+                            <button type="button" class="math-tool" data-template="1\frac{}{}" data-cursor="7" title="Mixed fraction, e.g. 1 and 1/2">1&frac12;</button>
+                            <button type="button" class="math-tool" data-template="^{}" data-cursor="2" title="Power">x&#8319;</button>
+                            <button type="button" class="math-tool" data-template="_{}" data-cursor="2" title="Subscript">x&#8345;</button>
+                            <button type="button" class="math-tool" data-template="\pi" title="Pi">&pi;</button>
+                            <button type="button" class="math-tool" data-template="\theta" title="Theta">&theta;</button>
+                            <button type="button" class="math-tool" data-template="\times" title="Multiply">&times;</button>
+                            <button type="button" class="math-tool" data-template="\div" title="Divide">&divide;</button>
+                            <button type="button" class="math-tool" data-template="\le" title="Less than or equal">&le;</button>
+                            <button type="button" class="math-tool" data-template="\ge" title="Greater than or equal">&ge;</button>
+                            <button type="button" class="math-tool" data-template="\neq" title="Not equal">&ne;</button>
                             <button type="button" class="math-tool" data-template="\left(\right)" data-cursor="6" title="Parentheses">( )</button>
                             <button type="button" class="math-tool" data-template="\left[\right]" data-cursor="6" title="Square brackets">[ ]</button>
                             <button type="button" class="math-tool" data-template="\left\lvert\right\rvert" data-cursor="11" title="Absolute value">|x|</button>
-                            <button type="button" class="math-tool" data-template="\sqrt[3]{}" data-cursor="9" title="Cube root">âˆ›â–¡</button>
+                            <button type="button" class="math-tool" data-template="\sqrt[3]{}" data-cursor="9" title="Cube root">&#8731;&#9633;</button>
                             <button type="button" class="math-tool" data-template="\frac{}{}" data-cursor="7" title="Fraction (numerator)">Fraction</button>
-                            <button type="button" class="math-tool" data-template="\binom{}{}" data-cursor="7" title="Combination">â¿Cáµ£</button>
-                            <button type="button" class="math-tool" data-template="\overline{}" data-cursor="10" title="Overline">xÌ…</button>
-                            <button type="button" class="math-tool" data-template="\vec{}" data-cursor="5" title="Vector">vâƒ—</button>
+                            <button type="button" class="math-tool" data-template="\binom{}{}" data-cursor="7" title="Combination">&#8319;C&#7523;</button>
+                            <button type="button" class="math-tool" data-template="\overline{}" data-cursor="10" title="Overline">x&#773;</button>
+                            <button type="button" class="math-tool" data-template="\vec{}" data-cursor="5" title="Vector">v&#8407;</button>
                             <button type="button" class="math-tool" data-template="\sin()" data-cursor="5" title="Sine">sin</button>
                             <button type="button" class="math-tool" data-template="\cos()" data-cursor="5" title="Cosine">cos</button>
                             <button type="button" class="math-tool" data-template="\tan()" data-cursor="5" title="Tangent">tan</button>
                             <button type="button" class="math-tool" data-template="\log()" data-cursor="5" title="Logarithm">log</button>
                             <button type="button" class="math-tool" data-template="\ln()" data-cursor="4" title="Natural logarithm">ln</button>
                             <button type="button" class="math-tool" data-template="\lim_{x\to}" data-cursor="6" title="Limit">lim</button>
-                            <button type="button" class="math-tool" data-template="\sum_{i=1}^{n}" data-cursor="6" title="Summation">âˆ‘</button>
-                            <button type="button" class="math-tool" data-template="\prod_{i=1}^{n}" data-cursor="7" title="Product">âˆ</button>
-                            <button type="button" class="math-tool" data-template="\int_{a}^{b}" data-cursor="6" title="Integral">âˆ«</button>
-                            <button type="button" class="math-tool" data-template="\infty" title="Infinity">âˆž</button>
-                            <button type="button" class="math-tool" data-template="\approx" title="Approximately equal">â‰ˆ</button>
-                            <button type="button" class="math-tool" data-template="\pm" title="Plus or minus">Â±</button>
-                            <button type="button" class="math-tool" data-template="^\circ" title="Degree">Â°</button>
-                            <button type="button" class="math-tool" data-template="\alpha" title="Alpha">Î±</button>
-                            <button type="button" class="math-tool" data-template="\beta" title="Beta">Î²</button>
-                            <button type="button" class="math-tool" data-template="\gamma" title="Gamma">Î³</button>
-                            <button type="button" class="math-tool" data-template="\Delta" title="Delta">Î”</button>
-                            <button type="button" class="math-tool" data-template="\Omega" title="Omega">Î©</button>
-                            <button type="button" class="math-tool" data-template="\in" title="Element of">âˆˆ</button>
-                            <button type="button" class="math-tool" data-template="\notin" title="Not an element of">âˆ‰</button>
-                            <button type="button" class="math-tool" data-template="\subseteq" title="Subset or equal">âŠ†</button>
-                            <button type="button" class="math-tool" data-template="\cup" title="Union">âˆª</button>
-                            <button type="button" class="math-tool" data-template="\cap" title="Intersection">âˆ©</button>
-                            <button type="button" class="math-tool" data-template="\to" title="Arrow">â†’</button>
-                            <button type="button" class="math-tool" data-template="\Rightarrow" title="Implies">â‡’</button>
-                            <button type="button" class="math-tool" data-template="\therefore" title="Therefore">âˆ´</button>
+                            <button type="button" class="math-tool" data-template="\sum_{i=1}^{n}" data-cursor="6" title="Summation">&sum;</button>
+                            <button type="button" class="math-tool" data-template="\prod_{i=1}^{n}" data-cursor="7" title="Product">&prod;</button>
+                            <button type="button" class="math-tool" data-template="\int_{a}^{b}" data-cursor="6" title="Integral">&int;</button>
+                            <button type="button" class="math-tool" data-template="\infty" title="Infinity">&infin;</button>
+                            <button type="button" class="math-tool" data-template="\approx" title="Approximately equal">&asymp;</button>
+                            <button type="button" class="math-tool" data-template="\pm" title="Plus or minus">&plusmn;</button>
+                            <button type="button" class="math-tool" data-template="^\circ" title="Degree">&deg;</button>
+                            <button type="button" class="math-tool" data-template="\alpha" title="Alpha">&alpha;</button>
+                            <button type="button" class="math-tool" data-template="\beta" title="Beta">&beta;</button>
+                            <button type="button" class="math-tool" data-template="\gamma" title="Gamma">&gamma;</button>
+                            <button type="button" class="math-tool" data-template="\Delta" title="Delta">&Delta;</button>
+                            <button type="button" class="math-tool" data-template="\Omega" title="Omega">&Omega;</button>
+                            <button type="button" class="math-tool" data-template="\in" title="Element of">&isin;</button>
+                            <button type="button" class="math-tool" data-template="\notin" title="Not an element of">&notin;</button>
+                            <button type="button" class="math-tool" data-template="\subseteq" title="Subset or equal">&sube;</button>
+                            <button type="button" class="math-tool" data-template="\cup" title="Union">&cup;</button>
+                            <button type="button" class="math-tool" data-template="\cap" title="Intersection">&cap;</button>
+                            <button type="button" class="math-tool" data-template="\to" title="Arrow">&rarr;</button>
+                            <button type="button" class="math-tool" data-template="\Rightarrow" title="Implies">&rArr;</button>
+                            <button type="button" class="math-tool" data-template="\therefore" title="Therefore">&there4;</button>
                             <button type="button" class="math-tool" data-template="\begin{matrix}{}&{}\\{}&{}\end{matrix}" data-cursor="15" title="2 by 2 matrix">Matrix</button>
                         </div>
                         <div id="math-preview" class="math-preview" aria-live="polite"></div>
@@ -247,7 +249,7 @@
                         <div id="option-math-tools" class="math-tools" aria-label="Option math symbols"></div>
                         <div id="structure-drawer" style="display:none; flex-direction:column; gap:8px; padding:12px; border:1px solid #ddd6fe; border-radius:9px; background:#faf9ff;">
                             <div style="display:flex; flex-wrap:wrap; gap:7px; align-items:center;">
-                                <button type="button" class="math-tool" id="draw-benzene">ï¼‹ Benzene ring</button>
+                                <button type="button" class="math-tool" id="draw-benzene">&#65291;</button>
                                 <button type="button" class="math-tool" id="draw-benzene-circle">Benzene circle</button>
                                 <button type="button" class="math-tool" id="draw-circle">Circle</button>
                                 <button type="button" class="math-tool" id="draw-triangle">Triangle</button>
@@ -256,14 +258,14 @@
                                 <button type="button" class="math-tool" id="select-structure">Select / Edit</button>
                                 <input type="text" id="structure-label" placeholder="Label, e.g. C or OH" style="max-width:180px; padding:8px; border:1px solid #c4b5fd; border-radius:7px;">
                                 <input type="text" id="structure-subscript" placeholder="Subscript, e.g. 3" aria-label="Label subscript" style="width:125px; padding:8px; border:1px solid #c4b5fd; border-radius:7px;">
-                                <input type="text" id="structure-superscript" placeholder="Superscript, e.g. 2âˆ’" aria-label="Label superscript" style="width:145px; padding:8px; border:1px solid #c4b5fd; border-radius:7px;">
+                                <input type="text" id="structure-superscript" placeholder="Superscript, e.g. 2&minus;" aria-label="Label superscript" style="width:145px; padding:8px; border:1px solid #c4b5fd; border-radius:7px;">
                                 <button type="button" class="math-tool" id="draw-label">Add label</button>
                                 <button type="button" class="math-tool" id="update-label" disabled>Update selected label</button>
                                 <button type="button" class="math-tool" id="undo-structure">Undo</button>
                                 <button type="button" class="math-tool" id="clear-structure">Clear</button>
                                 <button type="button" class="math-tool" id="save-structure">Use drawing</button>
                             </div>
-                            <small style="color:var(--text-gray);">Label adds text such as OH or CH to the drawing: fill Label, optionally fill Subscript (3) or Superscript (2âˆ’), click Add label, then click its position on the canvas. For CHâ‚ƒ, enter CH and subscript 3. Drag on the canvas to draw a bond. Undo or Ctrl+Z removes the last drawing item.</small>
+                            <small style="color:var(--text-gray);">Label adds text such as OH or CH to the drawing: fill Label, optionally fill Subscript (3) or Superscript (2&minus;), click Add label, then click its position on the canvas. For CH&#8323;, enter CH and subscript 3. Drag on the canvas to draw a bond. Undo or Ctrl+Z removes the last drawing item.</small>
                             <canvas id="structure-canvas" width="520" height="300" tabindex="0" aria-label="Chemical structure drawing canvas" style="width:min(100%,520px); height:auto; border:1px solid #cbd5e1; border-radius:7px; background:white; touch-action:none; cursor:crosshair;"></canvas>
                         </div>
                     </div>
@@ -342,6 +344,7 @@
     <div id="structure-dialog-content" class="structure-dialog-content"></div>
 </dialog>
 <footer class="site-copyright-footer">Copyright© 2026 Sariful Islam Shake. All rights reserved.</footer>
+    <script src="../js/theme.js"></script>
 </body>
 </html>
 

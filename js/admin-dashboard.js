@@ -1,5 +1,31 @@
 let dashboardStudents = [];
 
+function renderExamParticipation(results) {
+    const chart = document.getElementById('exam-participation-chart');
+    const totalNode = document.getElementById('exam-participation-total');
+    if (!chart || !totalNode) return;
+
+    const counts = new Map();
+    (Array.isArray(results) ? results : []).forEach(result => {
+        const name = String(result.Exam_Name || result.Subject || result.Exam_Title || 'Other exam').trim() || 'Other exam';
+        counts.set(name, (counts.get(name) || 0) + 1);
+    });
+    const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
+    const total = [...counts.values()].reduce((sum, count) => sum + count, 0);
+    totalNode.textContent = total;
+    if (!ranked.length) {
+        chart.innerHTML = '<div class="chart-empty">No exam attempts recorded yet. Results will appear here after students complete an exam.</div>';
+        return;
+    }
+
+    const max = Math.max(...ranked.map(([, count]) => count));
+    chart.innerHTML = ranked.map(([name, count]) => `<div class="participation-row">
+        <span class="participation-name" title="${escapeAdminDashboardText(name)}">${escapeAdminDashboardText(name)}</span>
+        <div class="participation-track" role="img" aria-label="${escapeAdminDashboardText(name)}: ${count} attempts"><div class="participation-bar" style="width:${Math.max(4, count / max * 100)}%"></div></div>
+        <span class="participation-count">${count}</span>
+    </div>`).join('');
+}
+
 function escapeAdminDashboardText(value) {
     return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
 }
@@ -81,9 +107,10 @@ window.onload = async () => {
     });
 
     try {
-        const [questionsData, studentsData, examsData, settingsData] = await Promise.all([
-            fetchData("Questions"), fetchData("Students"), fetchData("Exams"), fetchData("Settings")
+        const [questionsData, studentsData, examsData, settingsData, resultsData] = await Promise.all([
+            fetchData("Questions"), fetchData("Students"), fetchData("Exams"), fetchData("Settings"), fetchData("Results")
         ]);
+        renderExamParticipation(resultsData);
         renderPendingStudentNotifications(studentsData);
         const settings = Array.isArray(settingsData) ? settingsData : (Array.isArray(settingsData?.value) ? settingsData.value : []);
         const savedBrandName = [...settings].reverse().find(setting => setting.Setting_Name === 'Brand_Name')?.Setting_Value;

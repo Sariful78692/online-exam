@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -327,7 +327,12 @@
             .quiz-heading { align-items: flex-start; flex-direction: column; }
             .combined-subject-list { grid-template-columns:1fr; }
         }
-    </style>
+    
+</style>
+    <link rel="stylesheet" href="css/responsive.css">
+<style>.site-copyright-footer{position:fixed;z-index:1200;left:0;right:0;bottom:0;width:100%;padding:6px 12px;border-top:1px solid rgba(139,92,246,.2);background:rgba(255,255,255,.97);box-shadow:0 -3px 12px rgba(31,41,55,.09);color:#4b5563;font:500 11px/1.2 Inter,Arial,sans-serif;letter-spacing:.2px;text-align:center;white-space:nowrap;backdrop-filter:blur(8px);pointer-events:none}@media(max-width:520px){.site-copyright-footer{padding:10px 12px;font-size:10px;white-space:normal}}
+</style>
+<style>body:has(.sidebar) .site-copyright-footer{left:260px;width:calc(100% - 260px)}@media(max-width:760px){body:has(.sidebar) .site-copyright-footer{left:0;width:100%}}@media(max-width:520px){.site-copyright-footer{padding:6px 10px;font-size:10px}}</style>
 </head>
 
 <body>
@@ -364,22 +369,22 @@
                 <div class="header-greeting">
                     <h1>Welcome, <span id="student-name">Student</span></h1>
                     <p>Choose a subject and continue your exam practice.</p>
-                    <p class="header-datetime"><span>Date: <time id="student-current-date">—</time></span><span>Time: <time id="student-current-time">—</time></span></p>
+                    <p class="header-datetime"><span>Date: <time id="student-current-date">â€”</time></span><span>Time: <time id="student-current-time">â€”</time></span></p>
                 </div>
                 <div class="header-actions" aria-label="Student dashboard"><i class="fa-regular fa-bell"></i></div>
             </header>
 
             <section class="dashboard-grid" aria-label="Student overview">
                 <article class="stat-card">
-                    <div class="stat-info"><h3>Available Subjects</h3><h2 id="subject-count">—</h2><small class="stat-detail"><span id="combined-subject-count">0</span> included in combined exams</small></div>
+                    <div class="stat-info"><h3>Available Subjects</h3><h2 id="subject-count">â€”</h2><small class="stat-detail"><span id="combined-subject-count">0</span> included in combined exams</small></div>
                     <i class="stat-icon fa-solid fa-book-open"></i>
                 </article>
                 <article class="stat-card">
-                    <div class="stat-info"><h3>Available Questions</h3><h2 id="question-count">—</h2></div>
+                    <div class="stat-info"><h3>Available Questions</h3><h2 id="question-count">â€”</h2></div>
                     <i class="stat-icon green fa-solid fa-layer-group"></i>
                 </article>
                 <article class="stat-card">
-                    <div class="stat-info"><h3>Combined Exam Duration</h3><h2><span id="exam-duration">—</span> <small id="exam-duration-unit" style="font-size:13px;font-weight:500;color:#6b7280;">min</small></h2></div>
+                    <div class="stat-info"><h3>Combined Exam Duration</h3><h2><span id="exam-duration">â€”</span> <small id="exam-duration-unit" style="font-size:13px;font-weight:500;color:#6b7280;">min</small></h2></div>
                     <i class="stat-icon amber fa-solid fa-clock"></i>
                 </article>
             </section>
@@ -420,6 +425,11 @@
 
     <script src="js/api.js?v=20260930-toast1"></script>
     <script src="js/app.js?v=20261002-question-number-header-keys"></script>
+<footer class="site-copyright-footer">Copyright© 2026 Sariful Islam Shake. All rights reserved.</footer>
 </body>
 
 </html>
+
+
+
+

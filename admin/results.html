@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <script src="../js/admin-auth.js?v=20260930-toast1"></script>
@@ -35,7 +35,10 @@
         .result-view-dialog { width:min(760px,100%); max-height:90vh; overflow:auto; padding:24px; border-radius:16px; background:#fff; box-shadow:0 20px 60px rgba(0,0,0,.25); }
         .result-view-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; }
         .result-view-header h2 { margin:0; color:var(--text-dark); font-size:20px; }
-        .result-view-close { border:0; background:#f3f4f6; border-radius:8px; padding:8px 11px; cursor:pointer; }
+        .result-view-close { border:0; background:#f3f4f6; color:#111827; border-radius:8px; padding:8px 11px; cursor:pointer; transition:background-color .2s ease, color .2s ease, transform .2s ease, box-shadow .2s ease; }
+        .result-view-close:hover { background:#dc2626; color:#fff; transform:rotate(90deg) scale(1.08); box-shadow:0 4px 12px rgba(220,38,38,.3); }
+        .result-view-close:active { transform:rotate(90deg) scale(.94); }
+        .result-view-close:focus-visible { outline:2px solid #dc2626; outline-offset:3px; }
         .result-view-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-bottom:20px; }
         .result-view-summary div { padding:13px; border:1px solid var(--border-color); border-radius:10px; background:#fafafa; }
         .result-view-summary span { display:block; color:var(--text-gray); font-size:12px; }
@@ -43,12 +46,28 @@
         .results-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; }
         .print-results-btn { border:0; border-radius:8px; padding:10px 14px; background:var(--primary); color:#fff; font-weight:600; cursor:pointer; }
         @media print {
-            .sidebar, .print-results-btn, th:last-child, td:last-child { display:none !important; }
-            .main-content { margin:0 !important; padding:0 !important; }
-            .table-container { box-shadow:none !important; border:0 !important; }
-            body { background:#fff !important; display:block !important; height:auto !important; overflow:visible !important; }
+            @page { size:auto; margin:14mm; }
+            .sidebar, .print-results-btn, table thead, td:last-child, .result-view-modal { display:none !important; }
+            body { background:#fff !important; color:#111827 !important; display:block !important; height:auto !important; overflow:visible !important; }
+            .main-content { display:block !important; margin:0 !important; padding:0 !important; overflow:visible !important; }
+            .table-container { padding:0 !important; box-shadow:none !important; border:0 !important; }
+            .results-heading { margin-bottom:18px; border-bottom:2px solid #1f2937; padding-bottom:10px; }
+            .results-heading h2 { font-size:20px !important; }
+            .table-container > div { overflow:visible !important; }
+            table, tbody { display:block !important; width:100% !important; }
+            tbody tr { display:block !important; margin:0 0 16px !important; padding:10px 14px !important; border:1px solid #9ca3af !important; border-radius:6px; break-inside:avoid; page-break-inside:avoid; }
+            tbody td { display:flex !important; align-items:flex-start; justify-content:space-between; gap:18px; padding:7px 2px !important; border:0 !important; border-bottom:1px solid #e5e7eb !important; color:#111827 !important; text-align:right; }
+            tbody td:last-child { display:none !important; }
+            tbody td::before { content:attr(data-label); color:#4b5563; font-weight:600; text-align:left; }
+            tbody td:nth-last-child(2) { border-bottom:0 !important; }
+            .score-badge { background:transparent !important; color:#111827 !important; padding:0 !important; }
         }
-    </style>
+    
+</style>
+    <link rel="stylesheet" href="../css/responsive.css">
+<style>.site-copyright-footer{position:fixed;z-index:1200;left:0;right:0;bottom:0;width:100%;padding:6px 12px;border-top:1px solid rgba(139,92,246,.2);background:rgba(255,255,255,.97);box-shadow:0 -3px 12px rgba(31,41,55,.09);color:#4b5563;font:500 11px/1.2 Inter,Arial,sans-serif;letter-spacing:.2px;text-align:center;white-space:nowrap;backdrop-filter:blur(8px);pointer-events:none}@media(max-width:520px){.site-copyright-footer{padding:10px 12px;font-size:10px;white-space:normal}}
+</style>
+<style>body:has(.sidebar) .site-copyright-footer{left:260px;width:calc(100% - 260px)}@media(max-width:760px){body:has(.sidebar) .site-copyright-footer{left:0;width:100%}}@media(max-width:520px){.site-copyright-footer{padding:6px 10px;font-size:10px}}</style>
 </head>
 <body>
     <aside class="sidebar">
@@ -113,6 +132,11 @@
 
     <script src="../js/api.js?v=20260930-toast1"></script>
     <script src="../js/admin-results.js?v=20260930-toast1"></script>
+<footer class="site-copyright-footer">Copyright© 2026 Sariful Islam Shake. All rights reserved.</footer>
 </body>
 </html>
+
+
+
+
 

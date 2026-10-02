@@ -1,0 +1,199 @@
+* {
+    min-width: 0;
+}
+
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+img,
+canvas,
+video {
+    max-width: 100%;
+}
+
+input,
+select,
+textarea,
+button {
+    max-width: 100%;
+}
+
+@media (max-width: 900px) {
+    body:has(.sidebar) {
+        display: flex !important;
+        height: auto !important;
+        min-height: 100vh;
+        flex-direction: column !important;
+        overflow: auto !important;
+    }
+
+    .student-wrapper,
+    .layout {
+        width: 100%;
+        min-height: 100vh;
+        flex-direction: column !important;
+    }
+
+    .sidebar {
+        width: 100% !important;
+        max-height: none !important;
+        flex: 0 0 auto !important;
+        overflow: visible !important;
+        padding: 12px !important;
+        border-right: 0 !important;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .sidebar-menu,
+    .menu {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+        gap: 3px;
+        margin: 0;
+        padding: 0;
+    }
+
+    .sidebar-menu li,
+    .menu li {
+        min-width: 0;
+        list-style: none;
+    }
+
+    .sidebar-menu li a,
+    .menu a {
+        min-height: 40px;
+        margin: 0 0 3px !important;
+        padding: 9px !important;
+        overflow-wrap: anywhere;
+    }
+
+    .menu-category {
+        margin: 12px 0 6px 8px !important;
+    }
+
+    .sidebar-profile {
+        margin-top: 10px !important;
+    }
+
+    .main-content,
+    main.main-content,
+    body:has(.sidebar) > main {
+        width: 100%;
+        min-width: 0;
+        padding: 16px !important;
+        overflow: visible !important;
+    }
+
+    .form-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    .form-group,
+    .form-container,
+    .table-container,
+    .content-panel {
+        min-width: 0;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+    }
+
+    .table-container,
+    .table-responsive,
+    .table-wrapper {
+        max-width: 100%;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+        min-width: 620px;
+    }
+
+    .top-header,
+    .quiz-heading {
+        flex-wrap: wrap;
+    }
+
+    .math-symbol-dialog,
+    .structure-dialog {
+        width: calc(100vw - 24px) !important;
+        max-width: calc(100vw - 24px) !important;
+        max-height: calc(100dvh - 24px) !important;
+    }
+
+    .math-dialog-content,
+    .structure-dialog-content {
+        max-height: calc(100dvh - 90px) !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .main-content,
+    main.main-content,
+    body:has(.sidebar) > main {
+        padding: 12px !important;
+    }
+
+    .form-container,
+    .table-container,
+    .content-panel {
+        padding: 15px !important;
+        border-radius: 12px;
+    }
+
+    .form-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 14px;
+    }
+
+    .form-group.full-width,
+    .question-settings-row {
+        grid-column: 1 / -1 !important;
+    }
+
+    .question-settings-row {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        width: 100%;
+    }
+
+    .answer-options-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+
+    .question-meta-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+
+    .dashboard-grid,
+    .result-summary-grid,
+    .result-detail-summary,
+    .combined-subject-list {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+
+    .top-header {
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .top-header h1,
+    .header-greeting h1 {
+        font-size: 20px !important;
+    }
+
+    .btn-submit,
+    .btn-cancel {
+        margin-left: 0;
+    }
+
+    .question-settings-row input {
+        padding: 9px 8px !important;
+    }
+}

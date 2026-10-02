@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <script src="../js/admin-auth.js?v=20260930-toast1"></script>
@@ -263,7 +263,12 @@
         .recent-result-stats .negative strong { color:#b45309; }
         .recent-result-date { display:block; margin-top:12px; color:var(--text-gray); font-size:11px; }
         @media (max-width:700px) { .recent-result-stats { grid-template-columns:repeat(2,1fr); } }
-    </style>
+    
+</style>
+    <link rel="stylesheet" href="../css/responsive.css">
+<style>.site-copyright-footer{position:fixed;z-index:1200;left:0;right:0;bottom:0;width:100%;padding:6px 12px;border-top:1px solid rgba(139,92,246,.2);background:rgba(255,255,255,.97);box-shadow:0 -3px 12px rgba(31,41,55,.09);color:#4b5563;font:500 11px/1.2 Inter,Arial,sans-serif;letter-spacing:.2px;text-align:center;white-space:nowrap;backdrop-filter:blur(8px);pointer-events:none}@media(max-width:520px){.site-copyright-footer{padding:10px 12px;font-size:10px;white-space:normal}}
+</style>
+<style>body:has(.sidebar) .site-copyright-footer{left:260px;width:calc(100% - 260px)}@media(max-width:760px){body:has(.sidebar) .site-copyright-footer{left:0;width:100%}}@media(max-width:520px){.site-copyright-footer{padding:6px 10px;font-size:10px}}</style>
 </head>
 <body>
 
@@ -312,7 +317,7 @@
         <header class="top-header">
             <div class="header-greeting">
                 <h1 id="greeting-name">Good Morning, Admin</h1>
-                <p>Date: <span id="current-date">—</span><span class="header-time-separator"> · </span>Time: <span id="current-time">—</span></p>
+                <p>Date: <span id="current-date">â€”</span><span class="header-time-separator"> Â· </span>Time: <span id="current-time">â€”</span></p>
             </div>
             <div class="header-actions">
                 <div class="notification-wrap">
@@ -362,5 +367,10 @@
     <script src="../js/api.js?v=20260930-toast1"></script>
     <script src="../js/admin-dashboard.js?v=20260930-toast1"></script>
 
+<footer class="site-copyright-footer">Copyright© 2026 Sariful Islam Shake. All rights reserved.</footer>
 </body>
 </html>
+
+
+
+

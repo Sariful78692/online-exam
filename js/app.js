@@ -527,14 +527,15 @@ function selectSubject(subjectName, element) {
     const scheduleName = configuredExam?.Exam_Name || subjectName;
     const scheduledAt = getExamScheduleStart(scheduleName);
     const waiting = scheduledAt !== null && scheduledAt > Date.now();
+    const unavailable = subjectQuestions.length === 0;
+    const startLabel = unavailable ? 'Questions unavailable' : 'Start Exam';
     document.getElementById('subject-selection').innerHTML = `
         <h3 style="color: #1e293b; margin-top: 0;">বিষয়: ${subjectName}</h3>
         <p style="color: #64748b; line-height: 1.6;">এই পরীক্ষায় মোট <b>${subjectQuestions.length}টি</b> প্রশ্ন রয়েছে। সর্বমোট নম্বর <b>${totalMarks}</b> এবং পরীক্ষার জন্য নির্ধারিত সময় <b>${subjectDuration} মিনিট</b>।</p>
         <div class="subject-schedule-wrap">${renderScheduleBlock(scheduleName, false, 'Start Exam')}
-        <button type="button" class="btn-submit" data-start-exam-button data-ready-label="Start Exam" data-waiting-label="Exam not open yet" data-permanently-disabled="false" style="width: AUto; margin-top: 15px;" ${waiting ? 'disabled' : ''}>${waiting ? 'Exam not open yet' : 'পরীক্ষা শুরু করুন'}</button></div>
+        <button type="button" class="btn-submit" data-start-exam-button data-ready-label="${startLabel}" data-waiting-label="Exam not open yet" data-permanently-disabled="${unavailable ? 'true' : 'false'}" style="width: AUto; margin-top: 15px;" ${waiting || unavailable ? 'disabled' : ''}>${waiting ? 'Exam not open yet' : startLabel}</button></div>
     `;
     const startButton = document.querySelector('#subject-selection .btn-submit');
-    if (startButton) startButton.textContent = 'Start Exam';
     if (startButton) startButton.addEventListener('click', () => startExam(subjectName, scheduleName));
     startScheduleTicker();
 }
@@ -598,6 +599,10 @@ function startExam(selectedSubject, scheduleName = null) {
         : (Array.isArray(selectedSubject) ? selectedSubject : [selectedSubject]);
     const selectedSubjectKeys = currentExamSubjects.map(normalizeSubjectName);
     currentQuestions = allData.filter(q => selectedSubjectKeys.includes(normalizeSubjectName(q.Subject)));
+    if (currentQuestions.length === 0) {
+        alert("এই পরীক্ষার জন্য কোনো প্রশ্ন পাওয়া যায়নি।");
+        return;
+    }
     activeExamSubject = currentExamSubjects.length > 1 ? currentExamSubjects[0] : null;
     currentQuestionIndex = 0;
     selectedAnswers = new Array(currentQuestions.length).fill(null);

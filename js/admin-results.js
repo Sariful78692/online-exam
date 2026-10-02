@@ -76,16 +76,16 @@ async function loadResultsTable() {
 
             const tr = document.createElement("tr");
             tr.innerHTML = `
-                <td style="font-weight: 600; color: var(--primary);">${escapeHtml(studentId || '-')}</td>
-                <td style="font-weight: 500;">${escapeHtml(studentNameById.get(studentId) || result.Student_Name || '—')}</td>
-                <td style="font-weight: 500;">${escapeHtml(result.Exam_Name || result.Subject || result.Exam_Title || '-')}</td>
-                <td>${total || '-'}</td>
-                <td style="color: #10b981; font-weight: bold;" title="${countsUnavailable ? 'This old result did not store the right-answer count.' : ''}">${countsUnavailable ? 'Not recorded' : right}</td>
-                <td style="color: #ef4444; font-weight: bold;" title="${countsUnavailable ? 'This old result did not store the wrong-answer count.' : ''}">${countsUnavailable ? 'Not recorded' : wrong}</td>
-                <td style="color: #b45309; font-weight: bold;">${negativeMark}</td>
-                <td style="color: #6b7280;">${missed}</td>
-                <td><span class="score-badge ${scoreClass}">${scoreValue}</span></td>
-                <td style="font-size: 12px; color: #6b7280;">${result.Date || '-'}</td>
+                <td data-label="Student ID" style="font-weight: 600; color: var(--primary);">${escapeHtml(studentId || '-')}</td>
+                <td data-label="Student Name" style="font-weight: 500;">${escapeHtml(studentNameById.get(studentId) || result.Student_Name || '—')}</td>
+                <td data-label="Exam / Subject" style="font-weight: 500;">${escapeHtml(result.Exam_Name || result.Subject || result.Exam_Title || '-')}</td>
+                <td data-label="Total Questions">${total || '-'}</td>
+                <td data-label="Right" style="color: #10b981; font-weight: bold;" title="${countsUnavailable ? 'This old result did not store the right-answer count.' : ''}">${countsUnavailable ? 'Not recorded' : right}</td>
+                <td data-label="Wrong" style="color: #ef4444; font-weight: bold;" title="${countsUnavailable ? 'This old result did not store the wrong-answer count.' : ''}">${countsUnavailable ? 'Not recorded' : wrong}</td>
+                <td data-label="Negative Mark" style="color: #b45309; font-weight: bold;">${negativeMark}</td>
+                <td data-label="Missed" style="color: #6b7280;">${missed}</td>
+                <td data-label="Total Number"><span class="score-badge ${scoreClass}">${scoreValue}</span></td>
+                <td data-label="Date & Time" style="font-size: 12px; color: #6b7280;">${result.Date || '-'}</td>
                 <td><button type="button" class="btn-view" onclick="viewResult(${originalIndex})"><i class="fa-solid fa-eye"></i> View</button></td>
             `;
             tbody.appendChild(tr);

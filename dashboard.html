@@ -159,7 +159,7 @@
         .header-greeting p { margin: 0; color: var(--text-gray); font-size: 13px; }
         .header-datetime { display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:7px !important; color:#475569 !important; font-size:12px !important; font-weight:600; }
         .header-datetime span { color:#1e3a8a; font-variant-numeric:tabular-nums; }
-        .header-actions { display: flex; align-items: center; gap: 12px; color: var(--text-gray); }
+        .header-actions { display: flex; align-items: center; gap: 12px; margin-right: 150px; color: var(--text-gray); }
         .header-actions i { font-size: 19px; }
 
         .dashboard-grid {
@@ -321,6 +321,7 @@
             .main-content { padding: 20px 15px; }
         }
 
+        @media (max-width: 600px) { .header-actions { margin-right: 120px; } }
         @media (max-width: 480px) {
             .top-header { align-items: flex-start; }
             .header-greeting h1 { font-size: 20px; }
@@ -335,9 +336,11 @@
 </style>
 <style>body:has(.sidebar) .site-copyright-footer{left:260px;width:calc(100% - 260px)}@media(max-width:760px){body:has(.sidebar) .site-copyright-footer{left:0;width:100%}}@media(max-width:520px){.site-copyright-footer{padding:6px 10px;font-size:10px}}</style>
     <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/page-loader.css">
 </head>
 
 <body>
+    <script src="js/page-loader.js"></script>
     <div class="student-wrapper">
         <aside class="sidebar">
             <div class="logo-area"><i class="fa-solid fa-graduation-cap"></i> <span id="panel-brand-name">Sariful Tech</span></div>
@@ -371,22 +374,22 @@
                 <div class="header-greeting">
                     <h1>Welcome, <span id="student-name">Student</span></h1>
                     <p>Choose a subject and continue your exam practice.</p>
-                    <p class="header-datetime"><span>Date: <time id="student-current-date">â€”</time></span><span>Time: <time id="student-current-time">â€”</time></span></p>
+                    <p class="header-datetime"><span>Date: <time id="student-current-date">&mdash;</time></span><span>Time: <time id="student-current-time">&mdash;</time></span></p>
                 </div>
                 <div class="header-actions" aria-label="Student dashboard"><i class="fa-regular fa-bell"></i></div>
             </header>
 
             <section class="dashboard-grid" aria-label="Student overview">
                 <article class="stat-card">
-                    <div class="stat-info"><h3>Available Subjects</h3><h2 id="subject-count">â€”</h2><small class="stat-detail"><span id="combined-subject-count">0</span> included in combined exams</small></div>
+                    <div class="stat-info"><h3>Available Subjects</h3><h2 id="subject-count">&mdash;</h2><small class="stat-detail"><span id="combined-subject-count">0</span> included in combined exams</small></div>
                     <i class="stat-icon fa-solid fa-book-open"></i>
                 </article>
                 <article class="stat-card">
-                    <div class="stat-info"><h3>Available Questions</h3><h2 id="question-count">â€”</h2></div>
+                    <div class="stat-info"><h3>Available Questions</h3><h2 id="question-count">&mdash;</h2></div>
                     <i class="stat-icon green fa-solid fa-layer-group"></i>
                 </article>
                 <article class="stat-card">
-                    <div class="stat-info"><h3>Combined Exam Duration</h3><h2><span id="exam-duration">â€”</span> <small id="exam-duration-unit" style="font-size:13px;font-weight:500;color:#6b7280;">min</small></h2></div>
+                    <div class="stat-info"><h3>Combined Exam Duration</h3><h2><span id="exam-duration">&mdash;</span> <small id="exam-duration-unit" style="font-size:13px;font-weight:500;color:#6b7280;">min</small></h2></div>
                     <i class="stat-icon amber fa-solid fa-clock"></i>
                 </article>
             </section>

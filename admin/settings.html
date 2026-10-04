@@ -23,8 +23,8 @@
         .sidebar-menu li a:hover, .sidebar-menu li a.active { background-color: var(--primary-light); color: var(--primary); }
         .sidebar-menu li a i { font-size: 16px; width: 20px; text-align: center; }
         
-        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: AUto; padding: 30px; }
-        .form-container { background: white; padding: 25px; border-radius: 16px; border: 1px solid var(--border-color); max-width: 600px; margin-bottom: 30px; }
+        .main-content { flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 600px)); align-content: start; gap: 24px; overflow-y: AUto; padding: 30px 30px 54px; }
+        .form-container { background: white; padding: 25px; border-radius: 16px; border: 1px solid var(--border-color); width: 100%; }
         .form-container h2 { font-size: 18px; color: var(--text-dark); margin-bottom: 20px; }
         
         .form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
@@ -34,6 +34,7 @@
         
         .btn-submit { background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 10px; width: 100%; transition: 0.2s; }
         .btn-submit:hover { background: #7c3aed; }
+        @media (max-width: 1080px) { .main-content { grid-template-columns: minmax(0, 600px); } }
     
 </style>
     <link rel="stylesheet" href="../css/responsive.css">
@@ -122,12 +123,37 @@
                 <p id="admin-contact-message" style="margin-top:15px;font-weight:500;text-align:center;font-size:14px;"></p>
             </form>
         </div>
+        <div class="form-container">
+            <h2><i class="fa-solid fa-user-shield" style="color: var(--primary);"></i> Admin Login Credentials</h2>
+            <form id="admin-credentials-form">
+                <div class="form-group">
+                    <label for="new-admin-id">New Admin ID</label>
+                    <input type="text" id="new-admin-id" name="adminId" minlength="3" maxlength="60" autocomplete="username" placeholder="Enter a new admin ID" required>
+                </div>
+                <div class="form-group">
+                    <label for="current-admin-password">Current Password</label>
+                    <input type="password" id="current-admin-password" name="currentPassword" autocomplete="current-password" placeholder="Enter your current password" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-admin-password">New Password</label>
+                    <input type="password" id="new-admin-password" name="newPassword" minlength="4" autocomplete="new-password" placeholder="Enter a new password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm-admin-password">Confirm New Password</label>
+                    <input type="password" id="confirm-admin-password" name="confirmPassword" minlength="4" autocomplete="new-password" placeholder="Re-enter the new password" required>
+                </div>
+                <small style="display:block;margin:-6px 0 16px;color:var(--text-gray);font-size:11px;">Use these credentials the next time you sign in to the admin panel.</small>
+                <button type="submit" class="btn-submit" id="admin-credentials-save-btn">Update Login Credentials</button>
+                <p id="admin-credentials-message" style="margin-top:15px;font-weight:500;text-align:center;font-size:14px;" role="status"></p>
+            </form>
+        </div>
     </main>
 
     <script src="../js/api.js?v=20260930-toast1"></script>
     <script src="../js/admin-settings.js?v=20260930-toast1"></script>
     <script src="../js/admin-brand-settings.js?v=20260930-toast1"></script>
     <script src="../js/admin-contact-settings.js?v=20260930-toast1"></script>
+    <script src="../js/admin-credentials-settings.js?v=20261004"></script>
 <footer class="site-copyright-footer">Copyright© 2026 Sariful Islam Shake. All rights reserved.</footer>
     <script src="../js/theme.js"></script>
 </body>

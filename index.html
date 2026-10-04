@@ -29,6 +29,25 @@
             </div>
             <button type="submit" class="btn-submit" id="login-btn">Login Here</button>
             <p id="login-msg" style="text-align: center; margin-top: 15px; font-weight: bold;"></p>
+            <button type="button" class="forgot-password-link" id="forgot-password-btn">Forgot password?</button>
+        </form>
+        <form id="forgot-password-form">
+            <p class="forgot-password-help">Enter your User Name (Student ID) and create a new password.</p>
+            <div class="form-group floating-field">
+                <input type="text" id="forgot-user-id" placeholder=" " autocomplete="username" required>
+                <label for="forgot-user-id">User Name / Student ID</label>
+            </div>
+            <div class="form-group floating-field">
+                <input type="password" id="forgot-new-password" placeholder=" " minlength="4" autocomplete="new-password" required>
+                <label for="forgot-new-password">New Password</label>
+            </div>
+            <div class="form-group floating-field">
+                <input type="password" id="forgot-confirm-password" placeholder=" " minlength="4" autocomplete="new-password" required>
+                <label for="forgot-confirm-password">Confirm New Password</label>
+            </div>
+            <button type="submit" class="btn-submit" id="forgot-password-submit">Create New Password</button>
+            <p id="forgot-password-msg" style="text-align: center; margin-top: 15px; font-weight: bold;" role="status"></p>
+            <button type="button" class="forgot-password-link" id="back-to-login-btn">Back to login</button>
         </form>
         <form id="register-form">
             <div class="form-group floating-field"><input type="text" id="register-name" placeholder=" " autocomplete="name" required><label for="register-name">Full Name</label></div>
@@ -42,7 +61,7 @@
     </div>
 
     <script src="js/api.js?v=20260930-toast1"></script>
-    <script src="js/login.js?v=20260930-toast1"></script>
+    <script src="js/login.js?v=20261004-forgot-password"></script>
 <footer class="site-copyright-footer">Copyright© 2026 Sariful Islam Shake. All rights reserved.</footer>
 </body>
 </html>

@@ -16,4 +16,30 @@
     }
     if (document.readyState === 'complete') dismiss();
     else window.addEventListener('load', dismiss, { once: true });
+
+    var actionLoader;
+    var actionTimer;
+    var actionMessages = ['Just a moment…', 'Working on it…', 'Almost ready…'];
+
+    function showActionLoader() {
+        if (!actionLoader) {
+            actionLoader = document.createElement('div');
+            actionLoader.className = 'action-loader';
+            actionLoader.setAttribute('role', 'status');
+            actionLoader.setAttribute('aria-live', 'polite');
+            actionLoader.innerHTML = '<div class="action-loader__card"><span class="action-loader__orbit"><i class="fa-solid fa-bolt" aria-hidden="true"></i></span><span class="action-loader__text"></span><span class="action-loader__bar"><i></i></span></div>';
+            document.body.appendChild(actionLoader);
+        }
+        actionLoader.querySelector('.action-loader__text').textContent = actionMessages[Math.floor(Math.random() * actionMessages.length)];
+        actionLoader.classList.add('is-visible');
+        clearTimeout(actionTimer);
+        actionTimer = setTimeout(function () { actionLoader.classList.remove('is-visible'); }, 850);
+    }
+
+    document.addEventListener('click', function (event) {
+        if (event.button && event.button !== 0) return;
+        var button = event.target.closest('button, input[type="button"], input[type="submit"], [role="button"]');
+        if (!button || button.disabled || button.dataset.skipLoader !== undefined) return;
+        showActionLoader();
+    });
 })();

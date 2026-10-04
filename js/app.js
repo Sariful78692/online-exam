@@ -19,6 +19,8 @@ let studentResults = [];
 let examConfigurations = [];
 let examSchedules = new Map();
 let scheduleTicker = null;
+let currentExamEndsAt = 0;
+const EXAM_PROGRESS_PREFIX = 'exam-progress:';
 
 document.addEventListener('keydown', event => {
     const quiz = document.getElementById('quiz-container');
@@ -32,6 +34,8 @@ document.addEventListener('keydown', event => {
     event.preventDefault();
     radio.click();
 });
+
+window.addEventListener('pagehide', () => saveExamProgress());
 
 function normalizeSubjectName(value) {
     const subject = String(value || "").trim().toLocaleLowerCase();
@@ -82,6 +86,46 @@ function createAttemptKey(examName) {
 
 function hasCompletedExam(examName) {
     return completedExamKeys.has(createAttemptKey(examName));
+}
+
+function hasSavedExamProgress(examName) {
+    return !hasCompletedExam(examName) && Boolean(readExamProgress(examName));
+}
+
+function getExamProgressKey(examName = currentAttemptName) {
+    return `${EXAM_PROGRESS_PREFIX}${createAttemptKey(examName)}`;
+}
+
+function getQuestionSignature(questions = currentQuestions) {
+    return questions.map(question => [question.Question_ID || question.Question_Number || '', question.Subject || '', question.Question || ''].join('|'));
+}
+
+function readExamProgress(examName) {
+    try {
+        const saved = JSON.parse(localStorage.getItem(getExamProgressKey(examName)) || 'null');
+        if (!saved || !Array.isArray(saved.answers) || !Array.isArray(saved.questionSignature)) return null;
+        return saved;
+    } catch (_) { return null; }
+}
+
+function saveExamProgress() {
+    if (!currentAttemptName || !currentQuestions.length || !currentExamEndsAt) return;
+    const selected = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
+    if (selected) selectedAnswers[currentQuestionIndex] = selected.value;
+    try {
+        localStorage.setItem(getExamProgressKey(), JSON.stringify({
+            answers: selectedAnswers,
+            currentQuestionIndex,
+            activeExamSubject,
+            questionSignature: getQuestionSignature(),
+            endsAt: currentExamEndsAt,
+            savedAt: Date.now()
+        }));
+    } catch (error) { console.warn('Could not save exam progress on this device.', error); }
+}
+
+function clearExamProgress(examName = currentAttemptName) {
+    try { localStorage.removeItem(getExamProgressKey(examName)); } catch (_) { }
 }
 
 function getUnavailableSubjectKeys() {
@@ -477,7 +521,7 @@ function showCombinedExamSetup() {
             const scheduledAt = getExamScheduleStart(exam.name);
             const future = scheduledAt !== null && scheduledAt > Date.now();
             const unavailable = !ready || hasCompletedExam(exam.name);
-            const startLabel = hasCompletedExam(exam.name) ? 'Completed' : ready ? 'Start Combined Exam' : 'Questions unavailable';
+            const startLabel = hasCompletedExam(exam.name) ? 'Completed' : ready ? (hasSavedExamProgress(exam.name) ? 'Resume Combined Exam' : 'Start Combined Exam') : 'Questions unavailable';
             return `<article class="combined-exam-card">
                 <h3>${escapeHtml(exam.name)}</h3>
                 <p><b>Subjects:</b></p>
@@ -528,7 +572,7 @@ function selectSubject(subjectName, element) {
     const scheduledAt = getExamScheduleStart(scheduleName);
     const waiting = scheduledAt !== null && scheduledAt > Date.now();
     const unavailable = subjectQuestions.length === 0;
-    const startLabel = unavailable ? 'Questions unavailable' : 'Start Exam';
+    const startLabel = unavailable ? 'Questions unavailable' : (hasSavedExamProgress(scheduleName) ? 'Resume Exam' : 'Start Exam');
     document.getElementById('subject-selection').innerHTML = `
         <h3 style="color: #1e293b; margin-top: 0;">বিষয়: ${subjectName}</h3>
         <p style="color: #64748b; line-height: 1.6;">এই পরীক্ষায় মোট <b>${subjectQuestions.length}টি</b> প্রশ্ন রয়েছে। সর্বমোট নম্বর <b>${totalMarks}</b> এবং পরীক্ষার জন্য নির্ধারিত সময় <b>${subjectDuration} মিনিট</b>।</p>
@@ -540,23 +584,24 @@ function selectSubject(subjectName, element) {
     startScheduleTicker();
 }
 
-function startTimer(minutes) {
-    let timeInSeconds = minutes * 60;
-    const totalSeconds = timeInSeconds;
+function startTimer(minutes, savedEndsAt = null) {
+    const totalSeconds = minutes * 60;
+    currentExamEndsAt = Number(savedEndsAt) > 0 ? Number(savedEndsAt) : Date.now() + totalSeconds * 1000;
     clearInterval(timerInterval);
-    updateTimerDisplay(timeInSeconds, totalSeconds);
-    timerInterval = setInterval(() => {
-        timeInSeconds--;
+    const tick = () => {
+        const timeInSeconds = Math.max(0, Math.ceil((currentExamEndsAt - Date.now()) / 1000));
         updateTimerDisplay(timeInSeconds, totalSeconds);
-        let m = Math.floor(timeInSeconds / 60);
-        let s = timeInSeconds % 60;
-        document.getElementById('time-left').innerText = `${m < 10 ? "0"+m : m}:${s < 10 ? "0"+s : s}`;
-        
+        saveExamProgress();
         if (timeInSeconds <= 0) {
-            clearInterval(timerInterval); 
+            clearInterval(timerInterval);
             alert("আপনার সময় শেষ! স্বয়ংক্রিয়ভাবে খাতা জমা হচ্ছে।");
-            submitExam(); 
+            submitExam();
         }
+    };
+    tick();
+    if (currentExamEndsAt <= Date.now()) return;
+    timerInterval = setInterval(() => {
+        tick();
     }, 1000);
 }
 
@@ -572,6 +617,8 @@ function updateTimerDisplay(timeInSeconds, totalSeconds) {
 function cancelExam() {
     if (!confirm('আপনি কি পরীক্ষা বাতিল করে ফিরে যেতে চান? আপনার দেওয়া উত্তর সংরক্ষণ করা হবে না।')) return;
     clearInterval(timerInterval);
+    clearExamProgress();
+    currentExamEndsAt = 0;
     document.getElementById('quiz-container').style.display = 'none';
     document.getElementById('result-container').style.display = 'none';
     document.getElementById('subject-selection').style.display = 'block';
@@ -603,9 +650,16 @@ function startExam(selectedSubject, scheduleName = null) {
         alert("এই পরীক্ষার জন্য কোনো প্রশ্ন পাওয়া যায়নি।");
         return;
     }
+    const savedProgress = readExamProgress(currentAttemptName);
+    const progressMatchesCurrentExam = savedProgress && JSON.stringify(savedProgress.questionSignature) === JSON.stringify(getQuestionSignature());
     activeExamSubject = currentExamSubjects.length > 1 ? currentExamSubjects[0] : null;
-    currentQuestionIndex = 0;
-    selectedAnswers = new Array(currentQuestions.length).fill(null);
+    currentQuestionIndex = progressMatchesCurrentExam ? Math.min(Math.max(Number(savedProgress.currentQuestionIndex) || 0, 0), currentQuestions.length - 1) : 0;
+    selectedAnswers = progressMatchesCurrentExam
+        ? currentQuestions.map((_, index) => ['A', 'B', 'C', 'D'].includes(savedProgress.answers[index]) ? savedProgress.answers[index] : null)
+        : new Array(currentQuestions.length).fill(null);
+    if (progressMatchesCurrentExam && currentExamSubjects.some(subject => normalizeSubjectName(subject) === normalizeSubjectName(savedProgress.activeExamSubject))) {
+        activeExamSubject = savedProgress.activeExamSubject;
+    }
     
     document.getElementById('subject-selection').style.display = "none";
     document.getElementById('quiz-container').style.display = "block";
@@ -632,9 +686,20 @@ function startExam(selectedSubject, scheduleName = null) {
     });
     
     document.getElementById('questions-list').innerHTML = questionsHtml;
+    selectedAnswers.forEach((answer, index) => {
+        const radio = answer && document.querySelector(`input[name="q${index}"][value="${answer}"]`);
+        if (radio) radio.checked = true;
+    });
+    document.getElementById('questions-list').addEventListener('change', event => {
+        const radio = event.target.closest('input[type="radio"][name^="q"]');
+        if (!radio) return;
+        const index = Number(String(radio.name).slice(1));
+        if (Number.isInteger(index)) selectedAnswers[index] = radio.value;
+        saveExamProgress();
+    });
     renderExamSubjectTabs();
     renderQuestionNavigator();
-    showQuestion(0);
+    showQuestion(currentQuestionIndex);
 
     if (window.MathJax) MathJax.typesetPromise([document.getElementById('questions-list')]);
     
@@ -643,7 +708,7 @@ function startExam(selectedSubject, scheduleName = null) {
         : (currentExamSubjects.length > 1 ? COMBINED_EXAM_MINUTES : getSubjectDuration(currentExamSubjects[0]));
     document.getElementById("exam-duration").innerText = examDuration;
     document.getElementById("exam-duration-unit").innerText = "min";
-    startTimer(examDuration);
+    startTimer(examDuration, progressMatchesCurrentExam ? savedProgress.endsAt : null);
 }
 
 function renderExamSubjectTabs() {
@@ -723,6 +788,8 @@ function renderOptionContent(value) {
 
 function showQuestion(index) {
     if (index < 0 || index >= currentQuestions.length) return;
+    const previousAnswer = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
+    if (previousAnswer) selectedAnswers[currentQuestionIndex] = previousAnswer.value;
     currentQuestionIndex = index;
     document.querySelectorAll('.question-block').forEach((block, i) => {
         const matchesSubject = !activeExamSubject || normalizeSubjectName(currentQuestions[i].Subject) === normalizeSubjectName(activeExamSubject);
@@ -739,6 +806,7 @@ function showQuestion(index) {
         button.classList.toggle("active", normalizeSubjectName(button.textContent) === activeSubject);
     });
     document.getElementById('next-question-btn').disabled = visibleIndices.indexOf(index) === visibleIndices.length - 1;
+    saveExamProgress();
 }
 
 function goToNextQuestion() {
@@ -776,6 +844,8 @@ async function submitExam() {
 
     const attemptKey = createAttemptKey(currentAttemptName);
     completedExamKeys.add(attemptKey);
+    clearExamProgress();
+    currentExamEndsAt = 0;
     try {
         localStorage.setItem(`exam-review:${attemptKey}`, JSON.stringify(reviewItems));
         localStorage.setItem(`exam-completed:${attemptKey}`, "1");

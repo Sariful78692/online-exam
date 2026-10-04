@@ -125,7 +125,7 @@ body:has(.login-container) {
 
 .login-container .btn-submit:active { transform: translateY(0) scale(.99); }
 .login-container .btn-submit:disabled { opacity: .7; }
-.login-container #login-msg, .login-container #register-msg { min-height: 22px; font-size: 13px; }
+.login-container #login-msg, .login-container #register-msg, .login-container #forgot-password-msg { min-height: 22px; font-size: 13px; }
 .login-container #login-msg a, .login-container #register-msg a { color:#5b35cf; font-weight:600; text-decoration:none; white-space:nowrap; }
 .login-container #login-msg a:hover, .login-container #register-msg a:hover { text-decoration:underline; }
 .login-container #login-msg .fa-whatsapp, .login-container #register-msg .fa-whatsapp { color:#16a34a; }
@@ -165,6 +165,10 @@ body:has(.login-container) {
 
 .auth-switch button:hover { color: #4f46e5; text-decoration: underline; }
 #register-form { display: none; }
+#forgot-password-form { display: none; }
+.forgot-password-link { display:block; width:max-content; margin:15px auto 0; border:0; background:none; color:#7045df; font:600 13px 'Poppins',sans-serif; cursor:pointer; }
+.forgot-password-link:hover { color:#4f46e5; text-decoration:underline; }
+.forgot-password-help { margin:-8px 0 22px; color:#71798b; font-size:13px; text-align:center; }
 
 @keyframes login-card-in {
     from { opacity: 0; transform: translateY(18px) scale(.985); }

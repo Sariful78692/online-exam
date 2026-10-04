@@ -1,7 +1,23 @@
 const loginForm = document.getElementById('login-form');
 const registerForm = document.getElementById('register-form');
+const forgotPasswordForm = document.getElementById('forgot-password-form');
 const switchButton = document.getElementById('auth-switch-btn');
-let showingRegister = false;
+const pageTitle = document.querySelector('.login-container > h2');
+
+function setAuthView(view) {
+    const showingRegister = view === 'register';
+    const showingForgotPassword = view === 'forgot';
+    loginForm.style.display = view === 'login' ? 'block' : 'none';
+    registerForm.style.display = showingRegister ? 'block' : 'none';
+    forgotPasswordForm.style.display = showingForgotPassword ? 'block' : 'none';
+    pageTitle.textContent = showingRegister ? 'Student Registration' : showingForgotPassword ? 'Reset Password' : 'Student login';
+    document.querySelector('.auth-switch').style.display = showingForgotPassword ? 'none' : 'block';
+    document.getElementById('auth-switch-prompt').textContent = showingRegister ? 'Already registered?' : 'New student?';
+    switchButton.textContent = showingRegister ? 'Login here' : 'Register here';
+    document.getElementById('login-msg').textContent = '';
+    document.getElementById('register-msg').textContent = '';
+    document.getElementById('forgot-password-msg').textContent = '';
+}
 
 function escapeLoginHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
@@ -69,14 +85,51 @@ async function showAdminContacts(message, prefix) {
 }
 
 switchButton.addEventListener('click', () => {
-    showingRegister = !showingRegister;
-    loginForm.style.display = showingRegister ? 'none' : 'block';
-    registerForm.style.display = showingRegister ? 'block' : 'none';
-    document.querySelector('.login-container > h2').textContent = showingRegister ? 'Student Registration' : 'Student login';
-    document.getElementById('auth-switch-prompt').textContent = showingRegister ? 'Already registered?' : 'New student?';
-    switchButton.textContent = showingRegister ? 'Login here' : 'Register here';
-    document.getElementById('login-msg').textContent = '';
-    document.getElementById('register-msg').textContent = '';
+    setAuthView(registerForm.style.display === 'block' ? 'login' : 'register');
+});
+
+document.getElementById('forgot-password-btn').addEventListener('click', () => setAuthView('forgot'));
+document.getElementById('back-to-login-btn').addEventListener('click', () => setAuthView('login'));
+
+forgotPasswordForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    const userId = document.getElementById('forgot-user-id').value.trim();
+    const newPassword = document.getElementById('forgot-new-password').value;
+    const confirmPassword = document.getElementById('forgot-confirm-password').value;
+    const button = document.getElementById('forgot-password-submit');
+    const message = document.getElementById('forgot-password-msg');
+
+    if (newPassword !== confirmPassword) {
+        message.style.color = 'red';
+        message.textContent = 'New password and confirmation do not match.';
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = 'Updating...';
+    message.textContent = '';
+    try {
+        const students = await fetchData('Students', { forceRefresh: true });
+        const index = students.findIndex(student => String(student.Student_ID || '').trim().toLowerCase() === userId.toLowerCase());
+        if (index < 0) {
+            message.style.color = '#b45309';
+            message.textContent = 'User Name / Student ID was not found.';
+            return;
+        }
+        const student = students[index];
+        const row = [student.Student_ID, student.Name, student.Phone, newPassword, student.Status || 'Pending', student.Email || ''];
+        const result = await saveData('Students', row, 'update', Number(student._rowIndex) || index + 2, { silent: true });
+        if (result.status !== 'success') throw new Error('Password update failed');
+        forgotPasswordForm.reset();
+        message.style.color = '#166534';
+        message.textContent = 'New password created. You can now log in.';
+    } catch (_) {
+        message.style.color = 'red';
+        message.textContent = 'Could not update password. Please try again.';
+    } finally {
+        button.disabled = false;
+        button.textContent = 'Create New Password';
+    }
 });
 
 loginForm.addEventListener('submit', async event => {

@@ -1,4 +1,4 @@
-﻿let allData = [];
+let allData = [];
 let currentQuestions = [];
 let timerInterval;
 let loggedInStudent = null;
@@ -18,9 +18,12 @@ let currentAttemptName = "";
 let studentResults = [];
 let examConfigurations = [];
 let examSchedules = new Map();
+let reExamRequests = new Map();
+let activeReExamRequestKey = '';
 let scheduleTicker = null;
 let currentExamEndsAt = 0;
 const EXAM_PROGRESS_PREFIX = 'exam-progress:';
+const RE_EXAM_REQUEST_PREFIX = 'ReExam_Request:';
 
 document.addEventListener('keydown', event => {
     const quiz = document.getElementById('quiz-container');
@@ -88,6 +91,10 @@ function hasCompletedExam(examName) {
     return completedExamKeys.has(createAttemptKey(examName));
 }
 
+function getReExamRequestKey(examName) { return `${RE_EXAM_REQUEST_PREFIX}${createAttemptKey(examName)}`; }
+function getReExamRequest(examName) { return reExamRequests.get(getReExamRequestKey(examName)) || null; }
+function isReExamApproved(examName) { return String(getReExamRequest(examName)?.status || '').toLowerCase() === 'approved'; }
+function isExamLocked(examName) { return hasCompletedExam(examName) && !isReExamApproved(examName); }
 function hasSavedExamProgress(examName) {
     return !hasCompletedExam(examName) && Boolean(readExamProgress(examName));
 }
@@ -208,6 +215,9 @@ window.addEventListener('load', async () => {
             .filter(setting => String(setting.Setting_Name || '').startsWith('Exam_Schedule:'))
             .map(setting => [String(setting.Setting_Name).slice('Exam_Schedule:'.length).trim().toLocaleLowerCase(), String(setting.Setting_Value || '')]));
 
+        reExamRequests = new Map(settingsRows.filter(setting => String(setting.Setting_Name || '').startsWith(RE_EXAM_REQUEST_PREFIX)).map(setting => {
+            try { return [String(setting.Setting_Name), JSON.parse(setting.Setting_Value || '{}')]; } catch (_) { return null; }
+        }).filter(Boolean));
         if (settingsRows.length > 0) {
             const timeSettings = settingsRows.filter(s => s.Setting_Name === "Total_Time");
             if (timeSettings.length > 0) {
@@ -288,7 +298,14 @@ window.addEventListener('load', async () => {
             event.currentTarget.classList.add("active");
             showStudentResultView();
         });
-        document.getElementById("profile-menu").addEventListener("click", event => {
+        document.getElementById("re-exam-menu").addEventListener("click", event => {
+            event.preventDefault(); clearInterval(timerInterval); clearScheduleTicker();
+            document.getElementById("quiz-container").style.display = "none";
+            document.getElementById("result-container").style.display = "none";
+            document.getElementById("subject-selection").style.display = "block";
+            document.querySelectorAll(".sidebar-menu a").forEach(link => link.classList.remove("active"));
+            event.currentTarget.classList.add("active"); showReExamRequests();
+        });        document.getElementById("profile-menu").addEventListener("click", event => {
             event.preventDefault();
             clearInterval(timerInterval);
             clearScheduleTicker();
@@ -520,8 +537,8 @@ function showCombinedExamSetup() {
             const ready = counts.every(item => item.count > 0);
             const scheduledAt = getExamScheduleStart(exam.name);
             const future = scheduledAt !== null && scheduledAt > Date.now();
-            const unavailable = !ready || hasCompletedExam(exam.name);
-            const startLabel = hasCompletedExam(exam.name) ? 'Completed' : ready ? (hasSavedExamProgress(exam.name) ? 'Resume Combined Exam' : 'Start Combined Exam') : 'Questions unavailable';
+            const unavailable = !ready || isExamLocked(exam.name);
+            const startLabel = isExamLocked(exam.name) ? 'Completed' : isReExamApproved(exam.name) ? 'Start Re-Exam' : ready ? (hasSavedExamProgress(exam.name) ? 'Resume Combined Exam' : 'Start Combined Exam') : 'Questions unavailable';
             return `<article class="combined-exam-card">
                 <h3>${escapeHtml(exam.name)}</h3>
                 <p><b>Subjects:</b></p>
@@ -544,7 +561,7 @@ function selectSubject(subjectName, element) {
     document.querySelectorAll('.sidebar ul li a').forEach(a => a.classList.remove('active'));
     element.classList.add('active');
 
-    if (hasCompletedExam(subjectName)) {
+    if (isExamLocked(subjectName)) {
         document.getElementById('subject-selection').style.display = 'block';
         document.getElementById('quiz-container').style.display = 'none';
         document.getElementById('result-container').style.display = 'none';
@@ -637,8 +654,8 @@ function startExam(selectedSubject, scheduleName = null) {
         return;
     }
     clearScheduleTicker();
-    if (hasCompletedExam(currentAttemptName)) {
-        alert("You have already completed this exam. A second attempt is not allowed.");
+    if (isExamLocked(currentAttemptName)) {
+        alert("You have already completed this exam. Request a re-exam and wait for admin approval.");
         return;
     }
     currentExamSubjects = currentMockExam
@@ -875,8 +892,14 @@ async function submitExam() {
         score,
         new Date().toLocaleString()
     ];
-    try { await saveData("Results", resultData, 'add', null, { silent: true }); }
-    catch (error) { console.error("Could not save exam result.", error); }
+    try {
+        const response = await saveData("Results", resultData, 'add', null, { silent: true });
+        if (response.status === 'success' && activeReExamRequestKey) {
+            const request = reExamRequests.get(activeReExamRequestKey);
+            if (request) { request.status = 'Used'; request.usedAt = new Date().toLocaleString(); await saveSetting(activeReExamRequestKey, JSON.stringify(request)); reExamRequests.set(activeReExamRequestKey, request); }
+            activeReExamRequestKey = '';
+        }
+    } catch (error) { console.error("Could not save exam result.", error); }
 }
 
 function escapeReviewHtml(value) {
@@ -953,6 +976,19 @@ function renderSubjectResultCards(items, containerId = "subject-result-cards") {
     </article>`).join("") : '<div class="review-perfect"><strong>No subject result available</strong></div>';
 }
 
+async function submitReExamRequest(examName) {
+    const key = getReExamRequestKey(examName), existing = reExamRequests.get(key);
+    if (existing && ['pending','approved','used'].includes(String(existing.status || '').toLowerCase())) return;
+    const request = { studentId: String(loggedInStudent.Student_ID || '').trim(), studentName: loggedInStudent.Name || 'Student', examName, status: 'Pending', requestedAt: new Date().toLocaleString() };
+    const response = await saveSetting(key, JSON.stringify(request));
+    if (response.status === 'success') { reExamRequests.set(key, request); showReExamRequests(); }
+}
+function showReExamRequests() {
+    const panel = document.getElementById('subject-selection');
+    const exams = [...new Map(studentResults.map(row => { const name = getResultExamName(row); return [name.toLowerCase(), name]; })).values()];
+    panel.innerHTML = '<h2>Request for Re-Exam</h2><p>Admin approval is required before you can take a completed exam again.</p>' + (exams.length ? `<div class="student-result-list">${exams.map(name => { const req=getReExamRequest(name), status=String(req?.status||''), locked=['pending','approved','used'].includes(status.toLowerCase()); return `<article class="student-result-card"><span><strong>${escapeReviewHtml(name)}</strong><small>${status ? `Status: ${escapeReviewHtml(status)}` : 'No request sent'}</small></span><button type="button" class="btn-submit" data-reexam="${escapeReviewHtml(name)}" ${locked?'disabled':''}>${status.toLowerCase()==='approved'?'Approved — start exam':status.toLowerCase()==='pending'?'Request pending':status.toLowerCase()==='used'?'Re-exam completed':'Request Re-Exam'}</button></article>`; }).join('')}</div>` : '<p>No completed exams yet.</p>');
+    panel.querySelectorAll('[data-reexam]').forEach(button => button.addEventListener('click', () => submitReExamRequest(button.dataset.reexam)));
+}
 function showStudentResultView() {
     const panel = document.getElementById("subject-selection");
     const prefix = `exam-review:${String(loggedInStudent.Student_ID || "").trim().toLocaleLowerCase()}|`;
@@ -970,7 +1006,8 @@ function showStudentResultView() {
         })
     ].filter(([key, name]) => key && name)).values()];
 
-    panel.innerHTML = '<h2>Result View</h2><p>Choose an exam to see subject-wise correct, wrong and unanswered questions.</p>' +
+    const attemptHistory = [...studentResults].reverse().map((result, index) => `<article class="student-result-card" style="cursor:default"><span><strong>${escapeReviewHtml(getResultExamName(result))}</strong><small>Attempt ${studentResults.length - index} · ${escapeReviewHtml(result.Date || 'Completed exam')}</small></span><span class="student-result-score">${escapeReviewHtml(firstNonEmptyResultValue(result.Score, result.Total_Score, '—'))} <small>Total Number</small></span></article>`).join('');
+    panel.innerHTML = '<h2>Result View</h2><p>All attempts are retained below. Select an exam for its answer review.</p>' + (attemptHistory ? `<div class="student-result-list">${attemptHistory}</div><h3 class="result-review-heading">Exam Reviews</h3>` : '') +
         (names.length ? `<div class="student-result-list">${names.map((name, index) => {
             const result = [...studentResults].reverse().find(row => getResultExamName(row).toLocaleLowerCase() === name.toLocaleLowerCase());
             return `<button type="button" class="student-result-card" data-result-name-index="${index}">

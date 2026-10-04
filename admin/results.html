@@ -7,68 +7,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Results Database - Admin Panel</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        :root { --primary: #8b5cf6; --primary-light: #ede9fe; --bg-color: #f3f4f6; --sidebar-bg: #ffffff; --text-dark: #1f2937; --text-gray: #6b7280; --border-color: #e5e7eb; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; }
-        .sidebar { width: 260px; background-color: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 15px; overflow-y: AUto; flex-shrink: 0; }
-        .logo-area { display: flex; align-items: center; gap: 10px; padding: 10px; margin-bottom: 20px; font-size: 18px; font-weight: 700; color: var(--primary); }
-        .logo-area i { background: var(--primary); color: white; padding: 8px; border-radius: 8px; font-size: 14px; }
-        .menu-category { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 10px 10px; }
-        .sidebar-menu { list-style: none; }
-        .sidebar-menu li a { display: flex; align-items: center; gap: 12px; padding: 10px 12px; color: var(--text-gray); text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 500; transition: all 0.3s ease; margin-bottom: 4px; }
-        .sidebar-menu li a:hover, .sidebar-menu li a.active { background-color: var(--primary-light); color: var(--primary); }
-        .sidebar-menu li a i { font-size: 16px; width: 20px; text-align: center; }
-        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: AUto; padding: 30px; }
-        .table-container { background: white; padding: 25px; border-radius: 16px; border: 1px solid var(--border-color); }
-        .table-container h2 { font-size: 18px; color: var(--text-dark); margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { padding: 12px 10px; border-bottom: 1px solid var(--border-color); color: var(--text-gray); font-size: 13px; white-space: nowrap; }
-        td { padding: 15px 10px; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: var(--text-dark); }
-        .score-badge { padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 13px; }
-        .score-good { background: #d1fae5; color: #10b981; }
-        .score-bad { background: #fee2e2; color: #ef4444; }
-        .btn-view { background: var(--primary); color: white; border: none; padding: 7px 11px; border-radius: 6px; cursor: pointer; font-size: 12px; white-space:nowrap; }
-        .btn-view:hover { background: #7c3aed; }
-        .result-view-modal { position:fixed; inset:0; z-index:1000; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(17,24,39,.55); }
-        .result-view-modal.open { display:flex; }
-        .result-view-dialog { width:min(760px,100%); max-height:90vh; overflow:auto; padding:24px; border-radius:16px; background:#fff; box-shadow:0 20px 60px rgba(0,0,0,.25); }
-        .result-view-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; }
-        .result-view-header h2 { margin:0; color:var(--text-dark); font-size:20px; }
-        .result-view-close { border:0; background:#f3f4f6; color:#111827; border-radius:8px; padding:8px 11px; cursor:pointer; transition:background-color .2s ease, color .2s ease, transform .2s ease, box-shadow .2s ease; }
-        .result-view-close:hover { background:#dc2626; color:#fff; transform:rotate(90deg) scale(1.08); box-shadow:0 4px 12px rgba(220,38,38,.3); }
-        .result-view-close:active { transform:rotate(90deg) scale(.94); }
-        .result-view-close:focus-visible { outline:2px solid #dc2626; outline-offset:3px; }
-        .result-view-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-bottom:20px; }
-        .result-view-summary div { padding:13px; border:1px solid var(--border-color); border-radius:10px; background:#fafafa; }
-        .result-view-summary span { display:block; color:var(--text-gray); font-size:12px; }
-        .result-view-summary strong { display:block; margin-top:5px; color:var(--text-dark); font-size:18px; }
-        .results-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; }
-        .print-results-btn { border:0; border-radius:8px; padding:10px 14px; background:var(--primary); color:#fff; font-weight:600; cursor:pointer; }
-        @media print {
-            @page { size:auto; margin:14mm; }
-            .sidebar, .print-results-btn, table thead, td:last-child, .result-view-modal { display:none !important; }
-            body { background:#fff !important; color:#111827 !important; display:block !important; height:auto !important; overflow:visible !important; }
-            .main-content { display:block !important; margin:0 !important; padding:0 !important; overflow:visible !important; }
-            .table-container { padding:0 !important; box-shadow:none !important; border:0 !important; }
-            .results-heading { margin-bottom:18px; border-bottom:2px solid #1f2937; padding-bottom:10px; }
-            .results-heading h2 { font-size:20px !important; }
-            .table-container > div { overflow:visible !important; }
-            table, tbody { display:block !important; width:100% !important; }
-            tbody tr { display:block !important; margin:0 0 16px !important; padding:10px 14px !important; border:1px solid #9ca3af !important; border-radius:6px; break-inside:avoid; page-break-inside:avoid; }
-            tbody td { display:flex !important; align-items:flex-start; justify-content:space-between; gap:18px; padding:7px 2px !important; border:0 !important; border-bottom:1px solid #e5e7eb !important; color:#111827 !important; text-align:right; }
-            tbody td:last-child { display:none !important; }
-            tbody td::before { content:attr(data-label); color:#4b5563; font-weight:600; text-align:left; }
-            tbody td:nth-last-child(2) { border-bottom:0 !important; }
-            .score-badge { background:transparent !important; color:#111827 !important; padding:0 !important; }
-        }
     
-</style>
     <link rel="stylesheet" href="../css/responsive.css">
-<style>.site-copyright-footer{position:fixed;z-index:1200;left:0;right:0;bottom:0;width:100%;padding:6px 12px;border-top:1px solid rgba(139,92,246,.2);background:rgba(255,255,255,.97);box-shadow:0 -3px 12px rgba(31,41,55,.09);color:#4b5563;font:500 11px/1.2 Inter,Arial,sans-serif;letter-spacing:.2px;text-align:center;white-space:nowrap;backdrop-filter:blur(8px);pointer-events:none}@media(max-width:520px){.site-copyright-footer{padding:10px 12px;font-size:10px;white-space:normal}}
-</style>
-<style>body:has(.sidebar) .site-copyright-footer{left:260px;width:calc(100% - 260px)}@media(max-width:760px){body:has(.sidebar) .site-copyright-footer{left:0;width:100%}}@media(max-width:520px){.site-copyright-footer{padding:6px 10px;font-size:10px}}</style>
+
+<link rel="stylesheet" href="../css/pages/admin-results.css">
     <link rel="stylesheet" href="../css/theme.css">
     <link rel="stylesheet" href="../css/page-loader.css">
 </head>
@@ -89,6 +31,7 @@
         <div class="menu-category">Management</div>
         <ul class="sidebar-menu">
             <li><a href="results.html" class="active"><i class="fa-solid fa-database"></i> Results Database</a></li>
+            <li><a href="re-exam-requests.html"><i class="fa-solid fa-rotate-right"></i> Re-Exam Requests</a></li>
             <li><a href="#"><i class="fa-solid fa-chart-line"></i> Statistics</a></li>
             <li><a href="#"><i class="fa-solid fa-certificate"></i> Certificates</a></li>
         </ul>
